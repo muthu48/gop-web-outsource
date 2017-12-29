@@ -9,6 +9,6 @@ public class Connection {
 	private String connectionUserId;
 	private String groupId;
 	private String positionId;
-	private String status; //REQUESTED, CONNECTED, REJECTED
+	private String status; //REQUESTED, CONNECTED, REJECTED, DEACTIVATED
 	private boolean defaultConnected = false; //
 }

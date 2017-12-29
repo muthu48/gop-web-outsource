@@ -11,6 +11,7 @@ public class Post {
 	private String imageUrl;
 	private String videoUrl;
 	private String parentPostId;
+	private String districtId;
 
 	public String getId() {
 		return id;
@@ -108,6 +109,14 @@ public class Post {
 	 */
 	public void setParentPostId(String parentPostId) {
 		this.parentPostId = parentPostId;
+	}
+
+	public String getDistrictId() {
+		return districtId;
+	}
+
+	public void setDistrictId(String districtId) {
+		this.districtId = districtId;
 	}
 
 }

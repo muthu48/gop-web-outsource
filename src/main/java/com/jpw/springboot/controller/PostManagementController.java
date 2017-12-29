@@ -1,11 +1,14 @@
 package com.jpw.springboot.controller;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.jpw.springboot.model.Post;
 import com.jpw.springboot.service.PostService;
@@ -50,6 +54,7 @@ public class PostManagementController {
 		return new ResponseEntity<Post>(post, HttpStatus.OK);
 	}
 
+    //@CrossOrigin(origins = "http://localhost:3000")
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public ResponseEntity<?> createPost(@RequestBody Post post, UriComponentsBuilder ucBuilder) {
 		logger.info("Creating Post : {}", post);
@@ -64,7 +69,19 @@ public class PostManagementController {
 		post = postService.createPost(post);
 
 		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(ucBuilder.path("/api/post/{id}").buildAndExpand(post.getUserId()).toUri());
+		headers.setLocation(ucBuilder.path("/api/post/{id}")
+				.buildAndExpand(post.getUserId()).toUri());
+		headers.setAccessControlAllowOrigin("*");
+		headers.setAccessControlAllowCredentials(true);
+		List<HttpMethod> allowedMethods = new ArrayList<HttpMethod>();
+		allowedMethods.add(HttpMethod.POST);
+		headers.setAccessControlAllowMethods(allowedMethods);
+String[] allowedHeadersStrArr = {"Content-Type", "Accept", "X-Requested-With"};
+/*List<String> allowedHeaders = new ArrayList<String>();
+allowedHeaders.*/
+List<String> allowedHeaders = Arrays.asList(allowedHeadersStrArr) ;
+
+		headers.setAccessControlAllowHeaders(allowedHeaders);
 		return new ResponseEntity<Post>(post, HttpStatus.CREATED);
 	}
 
