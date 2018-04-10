@@ -47,6 +47,11 @@ public class ProfileTemplateServiceImpl implements ProfileTemplateService {
 	public List<ProfileTemplate> findAllProfileTemplates() {
 		return profileTemplateRepository.findAll();
 	}
+	
+	
+	public List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId){
+		return profileTemplateRepository.findByProfileTemplateId(profileTemplateId);
+	}
 
 	public boolean isProfileTemplateExist(ProfileTemplate pTemplate) {
 		return findByName(pTemplate.getName()) != null;

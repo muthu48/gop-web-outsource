@@ -38,6 +38,15 @@ public class ProfileManagementController {
 		return new ResponseEntity<List<ProfileTemplate>>(profiletemplate, HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/template/getProfileTemplate/{profileTemplateId}", method = RequestMethod.GET)
+	public ResponseEntity<List<ProfileTemplate>> listProfileTemplate(@PathVariable("profileTemplateId") String profileTemplateId) {
+		List<ProfileTemplate> profiletemplates = profileTemplateService.findByProfileTemplateId(profileTemplateId);
+		if (profiletemplates.isEmpty()) {
+			return new ResponseEntity(HttpStatus.NO_CONTENT);
+		}
+		return new ResponseEntity<List<ProfileTemplate>>(profiletemplates, HttpStatus.OK);
+	}	
+	
 	@RequestMapping(value = "/template/{id}", method = RequestMethod.GET)
 	public ResponseEntity<?> getProfileTemplate(@PathVariable("id") String id) {
 		logger.info("Fetching ProfileTemplate with id {}", id);

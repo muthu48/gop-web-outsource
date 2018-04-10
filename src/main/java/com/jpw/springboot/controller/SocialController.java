@@ -14,11 +14,14 @@ import org.springframework.social.facebook.api.Post;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jpw.springboot.model.Activites;
+import com.jpw.springboot.model.Connection;
 import com.jpw.springboot.model.User;
 import com.jpw.springboot.service.SocialService;
 import com.jpw.springboot.service.UserService;
@@ -56,6 +59,26 @@ public class SocialController {
 */		return new ResponseEntity<Activites>(activites, HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/social/getRelation", method = RequestMethod.GET)
+	public ResponseEntity<?> getRelation(@RequestParam (value = "userId", required = false) String userId,
+			@RequestParam (value = "districtId", required = false) String districtId) {
+		//logger.info("Fetching relation for userId {}", connection.getUserId());
+		boolean isFollowing = socialService.isFollowingUserAndGroup(userId, districtId);
+		return new ResponseEntity<Boolean>(isFollowing, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/social/followDistrict", method = RequestMethod.POST)
+	public ResponseEntity<?> followDistrict(@RequestBody Connection connection) {
+		logger.info("Establishing connection between userId " + connection.getUserId() + ", entityId " + connection.getGroupId());
+		connection = socialService.follow(connection);
+/*		if (activites == null) {
+			logger.error("Activites with userId {} not found.", userId);
+			return new ResponseEntity(new CustomErrorType("Activites with id " + userId + " not found"),
+					HttpStatus.NOT_FOUND);
+		}
+*/		return new ResponseEntity<Connection>(connection, HttpStatus.OK);
+	}	
+	
 	@RequestMapping(value = "/social/{id}", method = RequestMethod.DELETE)
 	public ResponseEntity<?> unFollow(@PathVariable("id") String id) {
 		logger.info("Fetching & Deleting User by unFollow  with id {}", id);

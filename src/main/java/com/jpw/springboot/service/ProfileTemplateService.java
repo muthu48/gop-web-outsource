@@ -21,6 +21,7 @@ public interface ProfileTemplateService {
 	void deleteAllProfileTemplates();
 
 	List<ProfileTemplate> findAllProfileTemplates();
+	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId);
 
 	boolean isProfileTemplateExist(ProfileTemplate profileTemplate);
 }

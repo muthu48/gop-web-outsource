@@ -46,23 +46,25 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         .password("password")
         .roles("ADMIN");
   }
-  
+  /*
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
-		configuration.setAllowedMethods(Arrays.asList("GET","POST"));
+		configuration.setAllowedOrigins(Arrays.asList("*"));
+		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE","OPTIONS"));
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", configuration);
 		return source;
 	}  
-	
+	*/
 	   @Bean
 	    public WebMvcConfigurer corsConfigurer() {
 	        return new WebMvcConfigurerAdapter() {
 	            @Override
 	            public void addCorsMappings(CorsRegistry registry) {
-	                registry.addMapping("/**").allowedOrigins("http://localhost:3000");
+	                registry.addMapping("/**")
+	                .allowedOrigins("http://localhost:3000")
+	                .allowedMethods("GET", "POST", "PUT", "DELETE","OPTIONS");
 	            }
 	        };
 	    }

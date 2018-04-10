@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jpw.springboot.model.Group;
+import com.jpw.springboot.repositories.ConnectionEntityRepository;
 import com.jpw.springboot.repositories.GroupRepository;
 
 @Service("groupService")
@@ -16,6 +17,9 @@ public class GroupServiceImpl implements GroupService {
 	@Autowired
 	private GroupRepository groupRepository;
 
+/*	@Autowired
+	private ConnectionRepository connectionEntityRepository;
+*/	
 	public Group findById(String id) {
 		return groupRepository.findOne(id);
 	}
