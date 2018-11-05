@@ -79,7 +79,7 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>JobPortalwork</finalName>
+		<finalName>GPX-beta</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

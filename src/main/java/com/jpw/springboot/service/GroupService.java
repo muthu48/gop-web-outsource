@@ -7,7 +7,9 @@ import com.jpw.springboot.model.Group;
 public interface GroupService {
 
 	Group findById(String id);
-
+	
+	Group findBySourceId(String sourceId);
+	
 	Group findByName(String name);
 
 	Group createGroup(Group group);

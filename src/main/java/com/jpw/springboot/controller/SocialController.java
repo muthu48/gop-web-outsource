@@ -78,6 +78,19 @@ public class SocialController {
 		}
 */		return new ResponseEntity<Connection>(connection, HttpStatus.OK);
 	}	
+
+	@RequestMapping(value = "/social/followPerson", method = RequestMethod.POST)
+	public ResponseEntity<?> followPerson(@RequestBody Connection connection) {
+		logger.info("Establishing connection between userId " + connection.getUserId() + ", connecting user " + connection.getConnectionUserId());
+		connection = socialService.follow(connection);
+/*		if (activites == null) {
+			logger.error("Activites with userId {} not found.", userId);
+			return new ResponseEntity(new CustomErrorType("Activites with id " + userId + " not found"),
+					HttpStatus.NOT_FOUND);
+		}
+*/		return new ResponseEntity<Connection>(connection, HttpStatus.OK);
+	}	
+	
 	
 	@RequestMapping(value = "/social/{id}", method = RequestMethod.DELETE)
 	public ResponseEntity<?> unFollow(@PathVariable("id") String id) {

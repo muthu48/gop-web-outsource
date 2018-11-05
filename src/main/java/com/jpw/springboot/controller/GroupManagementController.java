@@ -9,10 +9,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.MatrixVariable;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -40,15 +42,30 @@ public class GroupManagementController {
 		return new ResponseEntity<List<Group>>(groups, HttpStatus.OK);
 	}
 
+	/*IF NO OBJECT FOUND, DO SEARCH BY EXTERNAL/SOURCE ID
+	 * 
+	 * */
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
-	public ResponseEntity<?> getGroup(@PathVariable("id") String id) {
-		logger.info("Fetching Group with id {}", id);
-		Group Group = groupService.findById(id);
-		/*if (Group == null) {
+	public ResponseEntity<?> getGroup(@PathVariable("id") String id, @RequestParam String externalId) {
+		logger.info("Fetching Group with id - " + id + ", externalId - " + externalId);
+		Group group = null;
+		group = groupService.findById(id);
+		if (group == null) {
 			logger.error("Group with id {} not found.", id);
-			return new ResponseEntity(new CustomErrorType("Group with id " + id + " not found"), HttpStatus.NOT_FOUND);
-		}*/
-		return new ResponseEntity<Group>(Group, HttpStatus.OK);
+			if(externalId != null){
+				////TODO
+				//DECODE
+			}
+			
+			group = groupService.findBySourceId(externalId);
+			if (group == null && externalId != null) {
+				group = new Group();
+				//group.setId(id);
+				group.setSourceId(externalId);
+			}
+			//return new ResponseEntity(new CustomErrorType("Group with id " + id + " not found"), HttpStatus.NOT_FOUND);
+		}
+		return new ResponseEntity<Group>(group, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "", method = RequestMethod.POST)

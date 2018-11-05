@@ -23,6 +23,10 @@ public class GroupServiceImpl implements GroupService {
 	public Group findById(String id) {
 		return groupRepository.findOne(id);
 	}
+	
+	public Group findBySourceId(String sourceId){
+		return groupRepository.findBySourceId(sourceId);
+	}
 
 	public Group findByName(String name) {
 		return groupRepository.findByGroupName(name);

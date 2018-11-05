@@ -9,5 +9,6 @@ import com.jpw.springboot.model.Group;
 public interface GroupRepository extends MongoRepository<Group, String> {
 
 	Group findByGroupName(String groupName);
+	Group findBySourceId(String sourceId);
 
 }
