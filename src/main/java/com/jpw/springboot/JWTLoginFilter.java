@@ -13,29 +13,37 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jpw.springboot.model.User;
 
-public class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
+public class JWTLoginFilter extends UsernamePasswordAuthenticationFilter {
+    private AuthenticationManager authenticationManager;
 
-	public JWTLoginFilter(String url, AuthenticationManager authManager) {
-		super(new AntPathRequestMatcher(url));
-		setAuthenticationManager(authManager);
+	public JWTLoginFilter(AuthenticationManager authenticationManager) {
+		//super(new AntPathRequestMatcher(url));
+		//setAuthenticationManager(authenticationManager);
+        this.authenticationManager = authenticationManager;
+
 	}
 
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest req, HttpServletResponse res)
-			throws AuthenticationException, IOException, ServletException {
-		User creds = new ObjectMapper().readValue(req.getInputStream(), User.class);
-		return getAuthenticationManager().authenticate(new UsernamePasswordAuthenticationToken(creds.getUserName(),
-				creds.getUserPassword(), Collections.emptyList()));
+			throws AuthenticationException {
+		try{
+			User creds = new ObjectMapper().readValue(req.getInputStream(), User.class);
+			return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(creds.getUserName(),
+					creds.getUserPassword(), Collections.emptyList()));
+		} catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 	}
 
 	@Override
 	protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain,
 			Authentication auth) throws IOException, ServletException {
-		TokenAuthenticationService.addAuthentication(res, auth.getName());
+		TokenAuthenticationService.addAuthentication(res, ((org.springframework.security.core.userdetails.User)auth.getPrincipal()).getUsername());
 	}
 }

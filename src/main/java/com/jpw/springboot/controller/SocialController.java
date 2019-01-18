@@ -66,7 +66,16 @@ public class SocialController {
 		boolean isFollowing = socialService.isFollowingUserAndGroup(userId, districtId);
 		return new ResponseEntity<Boolean>(isFollowing, HttpStatus.OK);
 	}
+	
+	@RequestMapping(value = "/social/getFollowers", method = RequestMethod.GET)
+	public ResponseEntity<?> getFollowers(@RequestParam (value = "userId", required = false) String userId,
+			@RequestParam (value = "districtId", required = false) String districtId) {
+		//logger.info("Fetching relation for userId {}", connection.getUserId());
+		boolean isFollowing = socialService.isFollowingUserAndGroup(userId, districtId);
+		return new ResponseEntity<Boolean>(isFollowing, HttpStatus.OK);
+	}
 
+	
 	@RequestMapping(value = "/social/followDistrict", method = RequestMethod.POST)
 	public ResponseEntity<?> followDistrict(@RequestBody Connection connection) {
 		logger.info("Establishing connection between userId " + connection.getUserId() + ", entityId " + connection.getGroupId());

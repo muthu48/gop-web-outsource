@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +29,12 @@ public class UserManagementController {
 
 	@Autowired
 	UserService userService;
-
+	private BCryptPasswordEncoder bCryptPasswordEncoder;
+	
+	public UserManagementController(BCryptPasswordEncoder bCryptPasswordEncoder){
+		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+	}
+	
 	@RequestMapping(value = "/getAllUsers", method = RequestMethod.GET)
 	public ResponseEntity<List<User>> listAllUsers() {
 		List<User> users = userService.findAllUsers();
@@ -49,6 +55,7 @@ public class UserManagementController {
 */		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 
+	//for Registering User
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public ResponseEntity<?> createUser(@RequestBody User user, UriComponentsBuilder ucBuilder) {
 		logger.info("Creating User : {}", user);
@@ -59,6 +66,7 @@ public class UserManagementController {
 					new CustomErrorType("Unable to create. A User with name " + user.getUserName() + " already exist."),
 					HttpStatus.CONFLICT);
 		}*/
+		user.setUserPassword(bCryptPasswordEncoder.encode(user.getUserPassword()));
 		user = userService.createUser(user);
 
 		HttpHeaders headers = new HttpHeaders();

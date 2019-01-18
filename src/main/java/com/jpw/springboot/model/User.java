@@ -6,10 +6,14 @@ public class User {
 	@Id	
 	private String userId;
 	private String userName;
+	private String username;
 	private String userPassword;
+	private String password;
+
 	private String userType;
 	private String status;
 	private String sourceSystem;
+	private String sourceId;	
 	private String emailId;
 	private Enum tagName;
 	private ProfileData profileData[];	
@@ -43,6 +47,14 @@ public class User {
 	 */
 	public void setUserId(String userId) {
 		this.userId = userId;
+	}
+
+	public String getSourceId() {
+		return sourceId;
+	}
+
+	public void setSourceId(String sourceId) {
+		this.sourceId = sourceId;
 	}
 
 	/**
@@ -134,5 +146,21 @@ public class User {
 
 	public void setProfileData(ProfileData[] profileData) {
 		this.profileData = profileData;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 }

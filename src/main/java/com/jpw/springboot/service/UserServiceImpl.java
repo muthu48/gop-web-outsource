@@ -1,22 +1,24 @@
 package com.jpw.springboot.service;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
+//import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jpw.springboot.model.User;
 import com.jpw.springboot.model.UserProfile;
 import com.jpw.springboot.repositories.UserRepository;
-import static org.springframework.data.mongodb.core.query.Criteria.where;
-import org.springframework.data.mongodb.core.query.Query;
 
 @Service("userService")
 @Transactional
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
 	@Autowired
 	private UserRepository userRepository;
@@ -67,6 +69,16 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public boolean isUserExist(UserProfile user) {
 		return findByName(user.getUserId()) != null;
+	}
+
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		User user= userRepository.findByUserName(username);
+        if (user == null) {
+            throw new UsernameNotFoundException(username);
+        }
+        return new org.springframework.security.core.userdetails.User(user.getUserName(), user.getUserPassword(), Collections.emptyList());
+   
 	}
 
 }

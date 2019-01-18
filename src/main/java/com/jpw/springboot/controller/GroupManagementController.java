@@ -55,13 +55,15 @@ public class GroupManagementController {
 			if(externalId != null){
 				////TODO
 				//DECODE
+				group = groupService.findBySourceId(externalId);
+				
 			}
 			
-			group = groupService.findBySourceId(externalId);
 			if (group == null && externalId != null) {
 				group = new Group();
 				//group.setId(id);
 				group.setSourceId(externalId);
+				return new ResponseEntity<Group>(group, HttpStatus.NOT_FOUND);
 			}
 			//return new ResponseEntity(new CustomErrorType("Group with id " + id + " not found"), HttpStatus.NOT_FOUND);
 		}
@@ -81,7 +83,8 @@ public class GroupManagementController {
 		}
 */		
 		group = groupService.createGroup(group);
-
+		//TODO
+		//USER SHOULD BE FOLLOWING THIS GROUP BY DEFAULT
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(ucBuilder.path("/{id}").buildAndExpand(group.getId()).toUri());
 		return new ResponseEntity<Group>(group, HttpStatus.CREATED);
