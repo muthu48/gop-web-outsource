@@ -1,5 +1,7 @@
 package com.jpw.springboot.model;
 
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
 
 public class Post {
@@ -12,6 +14,7 @@ public class Post {
 	private String videoUrl;
 	private String parentPostId;
 	private String districtId;
+	private List<String> relatedFiles;
 
 	public String getId() {
 		return id;
@@ -119,4 +122,11 @@ public class Post {
 		this.districtId = districtId;
 	}
 
+	public List<String> getRelatedFiles() {
+		return relatedFiles;
+	}
+
+	public void setRelatedFiles(List<String> relatedFiles) {
+		this.relatedFiles = relatedFiles;
+	}
 }
