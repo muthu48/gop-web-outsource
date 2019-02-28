@@ -9,7 +9,7 @@ import com.jpw.springboot.model.UserProfile;
 @Repository
 public interface UserRepository extends MongoRepository<User, String> {
 
-	User findByUserName(String UserName);
+	User findByUsername(String Username);
 
 	void save(UserProfile user);
 

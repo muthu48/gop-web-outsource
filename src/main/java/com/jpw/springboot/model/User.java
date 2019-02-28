@@ -5,9 +5,9 @@ import org.springframework.data.annotation.Id;
 public class User {
 	@Id	
 	private String userId;
-	private String userName;
+	//private String userName;
 	private String username;
-	private String userPassword;
+	//private String userPassword;
 	private String password;
 
 	private String userType;
@@ -57,36 +57,36 @@ public class User {
 		this.sourceId = sourceId;
 	}
 
-	/**
+/*	*//**
 	 * @return the userName
-	 */
+	 *//*
 	public String getUserName() {
 		return userName;
 	}
 
-	/**
+	*//**
 	 * @param userName
 	 *            the userName to set
-	 */
+	 *//*
 	public void setUserName(String userName) {
 		this.userName = userName;
 	}
-
-	/**
+*/
+/*	*//**
 	 * @return the userPassword
-	 */
+	 *//*
 	public String getUserPassword() {
 		return userPassword;
 	}
 
-	/**
+	*//**
 	 * @param userPassword
 	 *            the userPassword to set
-	 */
+	 *//*
 	public void setUserPassword(String userPassword) {
 		this.userPassword = userPassword;
 	}
-
+*/
 	/**
 	 * @return the userType
 	 */

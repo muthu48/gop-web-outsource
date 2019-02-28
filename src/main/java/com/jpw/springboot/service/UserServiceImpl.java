@@ -27,13 +27,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		User user = userRepository.findOne(id);
 		
 		if(user != null)
-			user.setUserPassword(null);
+			user.setPassword(null);
 		
 		return user;
 	}
 
 	public User findByName(String name) {
-		return userRepository.findByUserName(name);
+		return userRepository.findByUsername(name);
 	}
 
 	public User createUser(User user) {
@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 
 	public boolean isUserExist(User user) {
-		return findByName(user.getUserName()) != null;
+		return findByName(user.getUsername()) != null;
 	}
 
 	@Override
@@ -73,11 +73,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		User user= userRepository.findByUserName(username);
+		User user= userRepository.findByUsername(username);
         if (user == null) {
             throw new UsernameNotFoundException(username);
         }
-        return new org.springframework.security.core.userdetails.User(user.getUserName(), user.getUserPassword(), Collections.emptyList());
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), Collections.emptyList());
    
 	}
 

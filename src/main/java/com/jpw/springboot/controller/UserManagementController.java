@@ -66,7 +66,7 @@ public class UserManagementController {
 					new CustomErrorType("Unable to create. A User with name " + user.getUserName() + " already exist."),
 					HttpStatus.CONFLICT);
 		}*/
-		user.setUserPassword(bCryptPasswordEncoder.encode(user.getUserPassword()));
+		user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
 		user = userService.createUser(user);
 
 		HttpHeaders headers = new HttpHeaders();
@@ -105,8 +105,8 @@ public class UserManagementController {
 					new CustomErrorType("Unable to upate. User with id " + id + " not found."), HttpStatus.NOT_FOUND);
 		}
 */
-		currentUser.setUserName(user.getUserName());
-		currentUser.setUserPassword(user.getUserPassword());
+		currentUser.setUsername(user.getUsername());
+		currentUser.setPassword(user.getPassword());
 		currentUser.setUserType(user.getUserType());
 		currentUser.setSourceSystem(user.getSourceSystem());
 		currentUser.setStatus(user.getStatus());
