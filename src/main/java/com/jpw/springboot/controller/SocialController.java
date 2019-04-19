@@ -82,10 +82,11 @@ public class SocialController {
 	/*
 	 * Get the list of followers for the given Entity - User, Group, Party
 	 * Can get list of 20(configurable), in case of large data set
-	 * "select count from connection where 
+	 * "select sourceEntityId from connection where 
 		targetentityid = entityId and
 		status in ('FOLLOWING')"
 		Use Mongo repository syntax
+		Based on sourceEntityId, get basic entity data such as name
 	 * */
 	@RequestMapping(value = "/social/getFollowers", method = RequestMethod.GET)
 	public ResponseEntity<?> getFollowers(@RequestParam (value = "entityId", required = false) String entityId) {
