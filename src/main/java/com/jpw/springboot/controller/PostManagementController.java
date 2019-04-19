@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,10 +27,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartRequest;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jpw.springboot.model.Post;
+import com.jpw.springboot.model.PostVO;
 import com.jpw.springboot.service.PostService;
 import com.jpw.springboot.service.UserService;
 import com.mongodb.BasicDBObject;
@@ -90,9 +93,13 @@ public class PostManagementController {
 
 	// @CrossOrigin(origins = "http://localhost:3000")
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	public ResponseEntity<?> createPost(@RequestParam(value ="file" , required = false) MultipartFile file, @RequestParam("post") String postData,
+	//public ResponseEntity<?> createPost(@RequestParam(value ="file" , required = false) MultipartFile file, @RequestParam("post") String postData,
+	//		UriComponentsBuilder ucBuilder) {
+	public ResponseEntity<?> createPost(@ModelAttribute FormDataWithFile formDataWithFile,
 			UriComponentsBuilder ucBuilder) {
-		logger.info("Creating Post : {}", postData);
+	//	public ResponseEntity<?> createPost(PostVO postVO,
+	//			UriComponentsBuilder ucBuilder) {	
+		//logger.info("Creating Post : {}", postData);
 		/*
 		 * if (postService.isPostExist(post)) {
 		 * logger.error("Unable to create. A Post with name {} already exist",
@@ -100,10 +107,17 @@ public class PostManagementController {
 		 * CustomErrorType("Unable to create. A Post with name " + post.getUserId() +
 		 * " already exist."), HttpStatus.CONFLICT); }
 		 */
+		
 		ObjectMapper mapper = new ObjectMapper();
 		Post post = null;
 		InputStream inputStream = null;
+		//post = mapper.readValue(postData, Post.class);
+		//MultipartFile file = postVO.getFile();
+		//Post post = postVO.getPost();
 		try {
+			MultipartFile file = formDataWithFile.getFile();
+			String postData = formDataWithFile.getPost();
+			
 			post = mapper.readValue(postData, Post.class);
 			post = postService.createPost(post);
 			if (file != null) {
@@ -195,4 +209,23 @@ public class PostManagementController {
 		return new ResponseEntity<Post>(HttpStatus.OK);
 	}
 
+}
+class FormDataWithFile {
+	 
+    private String post;
+    private MultipartFile file;
+	public String getPost() {
+		return post;
+	}
+	public void setPost(String post) {
+		this.post = post;
+	}
+	public MultipartFile getFile() {
+		return file;
+	}
+	public void setFile(MultipartFile file) {
+		this.file = file;
+	}
+ 
+    // standard getters and setters
 }

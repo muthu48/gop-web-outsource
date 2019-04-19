@@ -6,5 +6,18 @@ public class Position {
 	@Id	
 	private String id;		
 	private String positionName;
-	private ProfileData profileData[];		
+	private String status;
+	//private ProfileData profileData[];		
+	
+	/*
+	       "district":"33",
+            "level":"state",
+            "country":"us",
+            "chamber":"upper",
+            "state":"pa",
+            "party":"Republican",
+            "type":"member",
+
+	 */
+	//type - commmitte member
 }

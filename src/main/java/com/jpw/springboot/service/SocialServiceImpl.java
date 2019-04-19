@@ -1,8 +1,14 @@
 package com.jpw.springboot.service;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import com.jpw.springboot.model.Activites;
 import com.jpw.springboot.model.Connection;
@@ -36,19 +42,40 @@ public class SocialServiceImpl implements SocialService {
 	}
 
 	public Connection follow(Connection connection){
+		Calendar calendar = Calendar.getInstance();
+		Date now = calendar.getTime();
+		connection.setCreatedDate(now);
 		connection = connectionEntityRepository.save(connection);
 		return connection;
 		
 	}
 	
-	public boolean isFollowingUserAndGroup(String userId, String groupId){
+	public boolean isSourceEntityFollowingTargetEntity(String userId, String groupId){
 		boolean following = false;
-		Connection connection = connectionEntityRepository.findByUserIdAndGroupId(userId, groupId);
-		if(connection != null && connection.getStatus() != null && "FOLLOWING".equalsIgnoreCase(connection.getStatus())){
-			following = true;
+		Sort sort = new Sort(Sort.Direction.DESC, "createdDate");
+		List<Connection> connections = connectionEntityRepository.findBySourceEntityIdAndTargetEntityId(userId, groupId, sort);
+		if(!CollectionUtils.isEmpty(connections)){
+			Connection connection = connections.get(0);
+			if(connection != null && connection.getStatus() != null && "FOLLOWING".equalsIgnoreCase(connection.getStatus())){
+				following = true;
+			}
 		}
 		
 		return following;
+	}
+
+	public String getRelationshipStatus(String userId, String groupId){
+		String relationshipStatus = null;
+		Sort sort = new Sort(Sort.Direction.DESC, "createdDate");
+		List<Connection> connections = connectionEntityRepository.findBySourceEntityIdAndTargetEntityId(userId, groupId, sort);
+		if(!CollectionUtils.isEmpty(connections)){
+			Connection connection = connections.get(0);
+			if(connection != null && connection.getStatus() != null){
+				relationshipStatus = connection.getStatus();
+			}
+		}
+		
+		return relationshipStatus;
 	}
 
 }

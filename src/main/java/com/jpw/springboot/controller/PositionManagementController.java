@@ -51,7 +51,7 @@ public class PositionManagementController {
 	public ResponseEntity<Post> untagPosition(@PathVariable("id") String id) {
 		logger.info("untag All Position");
 
-		User user = userService.findByName(id);
+		User user = null;//userService.findByName(id);
 		if (user != null && user.getTagName() != null) {
 			//user.setTagName(EnumTags.tagNames.EMPTY);
 

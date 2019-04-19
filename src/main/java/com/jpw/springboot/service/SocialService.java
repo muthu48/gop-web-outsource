@@ -12,5 +12,7 @@ public interface SocialService {
 	
 	Connection follow(Connection connection);
 	
-	boolean isFollowingUserAndGroup(String userId, String groupId);
+	boolean isSourceEntityFollowingTargetEntity(String userId, String groupId);
+	
+	public String getRelationshipStatus(String userId, String groupId);
 }

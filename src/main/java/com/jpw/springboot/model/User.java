@@ -1,5 +1,7 @@
 package com.jpw.springboot.model;
 
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
 
 public class User {
@@ -10,14 +12,23 @@ public class User {
 	//private String userPassword;
 	private String password;
 
-	private String userType;
+	private String userType;//USER, LEGISLATOR, publicUser
 	private String status;
 	private String sourceSystem;
 	private String sourceId;	
 	private String emailId;
 	private Enum tagName;
-	private ProfileData profileData[];	
+	private List<Connection> connections;
+
+	//Ideally this property resides in UserProfile ***	
+	//Available Templates for an user
+	//Depends on EntityType
+	private List<ProfileTemplate> profileTemplates;		
 	
+	//Ideally this property resides in UserProfile ***
+	//contains Data for each associated Template
+	private List<ProfileData> profileDatas;		
+	//private LegislatorOpenState legislatorOpenState;	
 	
 
 	/**
@@ -140,12 +151,12 @@ public class User {
 		this.emailId = emailId;
 	}
 	
-	public ProfileData[] getProfileData() {
-		return profileData;
+	public List<ProfileData> getProfileDatas() {
+		return profileDatas;
 	}
 
-	public void setProfileData(ProfileData[] profileData) {
-		this.profileData = profileData;
+	public void setProfileDatas(List<ProfileData> profileDatas) {
+		this.profileDatas = profileDatas;
 	}
 
 	public String getUsername() {
@@ -163,4 +174,5 @@ public class User {
 	public void setPassword(String password) {
 		this.password = password;
 	}
+
 }

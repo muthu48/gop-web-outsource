@@ -3,6 +3,7 @@ package com.jpw.springboot.service;
 
 import java.util.List;
 
+import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.User;
 import com.jpw.springboot.model.UserProfile;
 
@@ -10,7 +11,8 @@ public interface UserService {
 	
 	User findById(String id);
 
-	User findByName(String name);
+	User getUser(String name, String userType) throws Exception;
+	LegislatorOpenState findLegislator(String name);
 
 	User createUser(User user);
 	

@@ -12,8 +12,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.User;
 import com.jpw.springboot.model.UserProfile;
+import com.jpw.springboot.repositories.LegislatorOpenStateRepository;
 import com.jpw.springboot.repositories.UserRepository;
 
 @Service("userService")
@@ -22,6 +24,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private LegislatorOpenStateRepository legislatorOpenStateRepository;
 
 	public User findById(String id) {
 		User user = userRepository.findOne(id);
@@ -32,8 +37,55 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return user;
 	}
 
-	public User findByName(String name) {
-		return userRepository.findByUsername(name);
+	private User findByUserName(String name) {
+		User user = userRepository.findByUsername(name);
+		
+		if(user != null)
+			user.setPassword(null);
+		
+		return user;
+
+	}
+	
+	public LegislatorOpenState findLegislator(String name) {
+		LegislatorOpenState legislator = legislatorOpenStateRepository.findByLegId(name);
+		return legislator;
+	}
+	
+	public User getUser(String name, String userType) throws Exception{
+		boolean createUserProfile = false;
+		User user = findByUserName(name);
+		if(user == null){
+			if(!userType.equalsIgnoreCase("publicUser")){ //CREATE PROFILE FOR NON-PUBLIC USER AND KEEP IT INACTIVE
+				createUserProfile = true;
+				user = new User();
+				user.setUsername(name);
+				user.setStatus("INACTIVE");
+			}else{
+				throw new Exception("User not found - " + name);
+			}
+		}	
+		
+		if(userType.equalsIgnoreCase("legislator")){
+			LegislatorOpenState legislator = findLegislator(name);		
+			if(createUserProfile && legislator != null){
+				//user.setLegislatorOpenState(legislator);
+				user.setSourceId(legislator.getLegId());
+			}
+		}	
+		
+		/*
+		 if user does not exist, then mark the profile as inactive.
+		 Also shall create an user with inactive profile.
+		 Transform LegislatorOpenState data into User data, during data import ?? 
+		 */				
+		if(createUserProfile){
+			//@Async user creation
+			user = createUser(user);
+		}
+		
+		return user;
+
 	}
 
 	public User createUser(User user) {
@@ -53,11 +105,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 
 	public List<User> findAllUsers() {
-		return userRepository.findAll();
+		return null;//userRepository.findAll();
 	}
 
 	public boolean isUserExist(User user) {
-		return findByName(user.getUsername()) != null;
+		return findByUserName(user.getUsername()) != null;
 	}
 
 	@Override
@@ -68,7 +120,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 	@Override
 	public boolean isUserExist(UserProfile user) {
-		return findByName(user.getUserId()) != null;
+		return findByUserName(user.getUserId()) != null;
 	}
 
 	@Override

@@ -60,19 +60,39 @@ public class SocialController {
 	}
 
 	@RequestMapping(value = "/social/getRelation", method = RequestMethod.GET)
-	public ResponseEntity<?> getRelation(@RequestParam (value = "userId", required = false) String userId,
-			@RequestParam (value = "districtId", required = false) String districtId) {
+	public ResponseEntity<?> getRelation(@RequestParam (value = "sourceEntityId", required = false) String sourceEntityId,
+			@RequestParam (value = "targetEntityId", required = false) String targetEntityId) {
 		//logger.info("Fetching relation for userId {}", connection.getUserId());
-		boolean isFollowing = socialService.isFollowingUserAndGroup(userId, districtId);
-		return new ResponseEntity<Boolean>(isFollowing, HttpStatus.OK);
+		//boolean isFollowing = socialService.isSourceEntityFollowingTargetEntity(sourceEntityId, targetEntityId);
+		String relationshipStatus = socialService.getRelationshipStatus(sourceEntityId, targetEntityId);
+		return new ResponseEntity<String>(relationshipStatus, HttpStatus.OK);
 	}
 	
+	/*
+	 * Get the count of followers for the given Entity - User, Group, Party
+	 * */
+	@RequestMapping(value = "/social/getFollowersCount", method = RequestMethod.GET)
+	public ResponseEntity<?> getFollowersCount(@RequestParam (value = "entityId", required = false) String entityId) {
+		logger.info("Fetching FollowersCount for entityId {}", entityId);
+		int followersCount = 0;
+		//TODO
+		return new ResponseEntity<Integer>(followersCount, HttpStatus.OK);
+	}
+	
+	/*
+	 * Get the list of followers for the given Entity - User, Group, Party
+	 * Can get list of 20(configurable), in case of large data set
+	 * "select count from connection where 
+		targetentityid = entityId and
+		status in ('FOLLOWING')"
+		Use Mongo repository syntax
+	 * */
 	@RequestMapping(value = "/social/getFollowers", method = RequestMethod.GET)
-	public ResponseEntity<?> getFollowers(@RequestParam (value = "userId", required = false) String userId,
-			@RequestParam (value = "districtId", required = false) String districtId) {
-		//logger.info("Fetching relation for userId {}", connection.getUserId());
-		boolean isFollowing = socialService.isFollowingUserAndGroup(userId, districtId);
-		return new ResponseEntity<Boolean>(isFollowing, HttpStatus.OK);
+	public ResponseEntity<?> getFollowers(@RequestParam (value = "entityId", required = false) String entityId) {
+		logger.info("Fetching Followers  for entityId {}", entityId);
+		List<User> followers = null;
+		//TODO
+		return new ResponseEntity<List<User>>(followers, HttpStatus.OK);
 	}
 
 	

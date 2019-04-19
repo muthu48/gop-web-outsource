@@ -3,6 +3,7 @@ package com.jpw.springboot.model;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.web.multipart.MultipartFile;
 
 public class Post {
 	@Id	
@@ -14,6 +15,8 @@ public class Post {
 	private String videoUrl;
 	private String parentPostId;
 	private String districtId;
+	private String taggedEntityId;
+	//private MultipartFile file;
 	private List<String> relatedFiles;
 
 	public String getId() {

@@ -1,37 +1,69 @@
 package com.jpw.springboot.model;
 
+import java.util.List;
+
+import org.springframework.data.annotation.Id;
+
+//User can have n UserProfile
 public class UserProfile {
-	/**
-	 * @return the userId
-	 */
+	@Id
+	private String userProfileId;
+	private String profileType; //??
+	private String status;
+	private String userId;
+	
+	//Available Templates for an user
+	//Depends on EntityType
+	private List<ProfileTemplate> profileTemplates;		
+	
+	//contains Data for each associated Template
+	private List<ProfileData> profileDatas;
+
+	public String getUserProfileId() {
+		return userProfileId;
+	}
+
+	public void setUserProfileId(String userProfileId) {
+		this.userProfileId = userProfileId;
+	}
+
+	public String getProfileType() {
+		return profileType;
+	}
+
+	public void setProfileType(String profileType) {
+		this.profileType = profileType;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
 	public String getUserId() {
 		return userId;
 	}
 
-	/**
-	 * @param userId
-	 *            the userId to set
-	 */
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 
-	/**
-	 * @return the profile_template_id
-	 */
-	public String[] getProfile_template_id() {
-		return profile_template_id;
+	public List<ProfileTemplate> getProfileTemplates() {
+		return profileTemplates;
 	}
 
-	/**
-	 * @param profile_template_id
-	 *            the profile_template_id to set
-	 */
-	public void setProfile_template_id(String[] profile_template_id) {
-		this.profile_template_id = profile_template_id;
+	public void setProfileTemplates(List<ProfileTemplate> profileTemplates) {
+		this.profileTemplates = profileTemplates;
 	}
 
-	private String userId;
-	private String[] profile_template_id;
+	public List<ProfileData> getProfileDatas() {
+		return profileDatas;
+	}
 
+	public void setProfileDatas(List<ProfileData> profileDatas) {
+		this.profileDatas = profileDatas;
+	}	
 }
