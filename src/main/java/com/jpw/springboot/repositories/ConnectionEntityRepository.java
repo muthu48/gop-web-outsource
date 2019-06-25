@@ -14,4 +14,5 @@ public interface ConnectionEntityRepository  extends MongoRepository<Connection,
 	List<Connection> findByGroupId(String groupId);	
 	List<Connection> findBySourceEntityIdAndTargetEntityId(String sourceEntityId, String targetEntityId, Sort sort);
 	//List<Connection> findBySourceEntityIdAndTargetEntityIdAndStatus(String sourceEntityId, String targetEntityId, String status, Sort sort);
+	List<Connection> findByTargetEntityIdAndStatus(String targetEntityId, String status);
 }

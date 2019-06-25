@@ -75,7 +75,9 @@ public class SocialController {
 	public ResponseEntity<?> getFollowersCount(@RequestParam (value = "entityId", required = false) String entityId) {
 		logger.info("Fetching FollowersCount for entityId {}", entityId);
 		int followersCount = 0;
-		//TODO
+		
+		followersCount = socialService.getFollowersCount(entityId);
+		
 		return new ResponseEntity<Integer>(followersCount, HttpStatus.OK);
 	}
 	
@@ -91,8 +93,8 @@ public class SocialController {
 	@RequestMapping(value = "/social/getFollowers", method = RequestMethod.GET)
 	public ResponseEntity<?> getFollowers(@RequestParam (value = "entityId", required = false) String entityId) {
 		logger.info("Fetching Followers  for entityId {}", entityId);
-		List<User> followers = null;
-		//TODO
+		List<User> followers = socialService.getFollowers(entityId);
+		
 		return new ResponseEntity<List<User>>(followers, HttpStatus.OK);
 	}
 
