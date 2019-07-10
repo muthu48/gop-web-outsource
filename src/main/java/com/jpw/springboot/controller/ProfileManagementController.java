@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.jpw.springboot.model.Post;
+import com.jpw.springboot.model.ProfileData;
 import com.jpw.springboot.model.ProfileTemplate;
 import com.jpw.springboot.service.ProfileTemplateService;
+import com.jpw.springboot.service.UserService;
 //import com.jpw.springboot.util.CustomErrorType;
 
 @RestController
@@ -28,7 +30,10 @@ public class ProfileManagementController {
 
 	@Autowired
 	ProfileTemplateService profileTemplateService;
-
+	
+	@Autowired
+	UserService userService;
+	
 	@RequestMapping(value = "/template/getAllProfileTemplates", method = RequestMethod.GET)
 	public ResponseEntity<List<ProfileTemplate>> listAllProfileTemplates() {
 		List<ProfileTemplate> profiletemplate = profileTemplateService.findAllProfileTemplates();
@@ -134,5 +139,27 @@ public class ProfileManagementController {
 		}
 		return new ResponseEntity<ProfileTemplate>(profileTemplate, HttpStatus.OK);
 	}*/
+	
+	@RequestMapping(value = "/user/profileData", method = RequestMethod.POST)
+	public ResponseEntity<?> createProfileData(@RequestBody ProfileData profileData,
+			UriComponentsBuilder ucBuilder) {
+		logger.info("Creating user ProfileData : {}", profileData);
+
+		profileData = userService.createProfileData(profileData);
+
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.setLocation(ucBuilder.path("/profile/template/{id}").buildAndExpand(profiletemplate.getId()).toUri());
+		return new ResponseEntity<ProfileData>(profileData, HttpStatus.CREATED);
+	}
+
+	@RequestMapping(value = "/user/profileData", method = RequestMethod.PUT)
+	public ResponseEntity<?> updateProfileData(@RequestBody ProfileData profileData,
+			UriComponentsBuilder ucBuilder) {
+		logger.info("Creating user ProfileData : {}", profileData);
+
+		profileData = userService.saveProfileData(profileData);
+
+		return new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
+	}
 
 }

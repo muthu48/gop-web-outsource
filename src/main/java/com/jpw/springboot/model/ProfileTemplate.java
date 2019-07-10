@@ -2,6 +2,8 @@ package com.jpw.springboot.model;
 
 import org.springframework.data.annotation.Id;
 
+//PROFILE TEMPLATE DEFINITION, 
+//THIS CAN BE ASSOCIATED WITH ANY ENTITY AS PROFILEDATA
 public class ProfileTemplate {
 	@Id	
 	private String id;	

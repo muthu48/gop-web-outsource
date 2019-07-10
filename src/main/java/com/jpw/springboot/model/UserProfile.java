@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.annotation.Id;
 
+//OBSOLETE ?
 //User can have n UserProfile
 public class UserProfile {
 	@Id

@@ -19,13 +19,12 @@ public class User {
 	private String emailId;
 	private Enum tagName;
 	private List<Connection> connections;
-
-	//Ideally this property resides in UserProfile ***	
+	private UserProfile userProfile; // contains profileTemplates, profileDatas
+	
 	//Available Templates for an user
 	//Depends on EntityType
 	private List<ProfileTemplate> profileTemplates;		
 	
-	//Ideally this property resides in UserProfile ***
 	//contains Data for each associated Template
 	private List<ProfileData> profileDatas;		
 	//private LegislatorOpenState legislatorOpenState;	
@@ -173,6 +172,30 @@ public class User {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public List<Connection> getConnections() {
+		return connections;
+	}
+
+	public void setConnections(List<Connection> connections) {
+		this.connections = connections;
+	}
+
+	public UserProfile getUserProfile() {
+		return userProfile;
+	}
+
+	public void setUserProfile(UserProfile userProfile) {
+		this.userProfile = userProfile;
+	}
+
+	public List<ProfileTemplate> getProfileTemplates() {
+		return profileTemplates;
+	}
+
+	public void setProfileTemplates(List<ProfileTemplate> profileTemplates) {
+		this.profileTemplates = profileTemplates;
 	}
 
 }

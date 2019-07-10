@@ -13,9 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jpw.springboot.model.LegislatorOpenState;
+import com.jpw.springboot.model.ProfileData;
 import com.jpw.springboot.model.User;
 import com.jpw.springboot.model.UserProfile;
 import com.jpw.springboot.repositories.LegislatorOpenStateRepository;
+import com.jpw.springboot.repositories.ProfileDataRepository;
 import com.jpw.springboot.repositories.UserRepository;
 
 @Service("userService")
@@ -24,6 +26,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private ProfileDataRepository profileDataRepository;
 	
 	@Autowired
 	private LegislatorOpenStateRepository legislatorOpenStateRepository;
@@ -122,7 +127,20 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	public boolean isUserExist(UserProfile user) {
 		return findByUserName(user.getUserId()) != null;
 	}
-
+	
+	public ProfileData createProfileData(ProfileData profileData){
+		return profileDataRepository.insert(profileData);	
+	}
+	
+	public ProfileData saveProfileData(ProfileData profileData){
+		return profileDataRepository.save(profileData);	
+	}
+	
+	public List<ProfileData> getProfileData(String entityId){
+		List<ProfileData> profileDataList = profileDataRepository.findByEntityId(entityId);
+		return profileDataList;		
+	}
+	
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		User user= userRepository.findByUsername(username);

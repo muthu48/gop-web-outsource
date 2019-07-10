@@ -4,6 +4,7 @@ package com.jpw.springboot.service;
 import java.util.List;
 
 import com.jpw.springboot.model.LegislatorOpenState;
+import com.jpw.springboot.model.ProfileData;
 import com.jpw.springboot.model.User;
 import com.jpw.springboot.model.UserProfile;
 
@@ -17,7 +18,6 @@ public interface UserService {
 	User createUser(User user);
 	
 	void saveUser(UserProfile user);
-
 	User updateUser(User user);
 
 	void deleteUserById(String id);
@@ -28,5 +28,8 @@ public interface UserService {
 
 	boolean isUserExist(User user);
 	boolean isUserExist(UserProfile user);
+	public ProfileData createProfileData(ProfileData profileData);
+	public ProfileData saveProfileData(ProfileData profileData);
+	public List<ProfileData> getProfileData(String entityId);
 	
 }
