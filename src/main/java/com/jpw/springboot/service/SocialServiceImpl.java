@@ -1,5 +1,6 @@
 package com.jpw.springboot.service;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -12,8 +13,10 @@ import org.springframework.util.CollectionUtils;
 
 import com.jpw.springboot.model.Activites;
 import com.jpw.springboot.model.Connection;
+import com.jpw.springboot.model.User;
 import com.jpw.springboot.repositories.ConnectionEntityRepository;
 import com.jpw.springboot.repositories.SocialServiceRepository;
+import com.jpw.springboot.repositories.UserRepository;
 
 @Service("socialService")
 @Transactional
@@ -24,6 +27,9 @@ public class SocialServiceImpl implements SocialService {
 
 	@Autowired
 	private ConnectionEntityRepository connectionEntityRepository;
+	
+	@Autowired
+	private UserRepository userRepository;
 	
 	@Override
 	public Activites findByUserId(String id) {
@@ -76,6 +82,25 @@ public class SocialServiceImpl implements SocialService {
 		}
 		
 		return relationshipStatus;
+	}
+
+	@Override
+	public int getFollowersCount(String entityId) {
+		
+		return connectionEntityRepository.findByTargetEntityIdAndStatus(entityId, "FOLLOWING").size();
+	}
+
+	@Override
+	public List<User> getFollowers(String entityId) {
+		
+		List<User> users = new ArrayList<User>();
+		List<Connection> connections = connectionEntityRepository.findByTargetEntityIdAndStatus(entityId, "FOLLOWING");
+		
+		for(Connection connection: connections) {
+			users.add(userRepository.findByUsername(connection.getSourceEntityId()));
+		}
+		
+		return users;
 	}
 
 }
