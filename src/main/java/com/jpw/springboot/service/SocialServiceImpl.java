@@ -97,7 +97,13 @@ public class SocialServiceImpl implements SocialService {
 		List<Connection> connections = connectionEntityRepository.findByTargetEntityIdAndStatus(entityId, "FOLLOWING");
 		
 		for(Connection connection: connections) {
-			users.add(userRepository.findByUsername(connection.getSourceEntityId()));
+			User user = userRepository.findByUsername(connection.getSourceEntityId());
+			
+			//CAN BE DONE THRU INTERCEPTOR
+			if(user != null)
+				user.setPassword(null);
+
+			users.add(user);
 		}
 		
 		return users;

@@ -1,6 +1,9 @@
 package com.jpw.springboot.controller;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -9,31 +12,43 @@ import org.bson.BSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.gridfs.GridFsOperations;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jpw.springboot.model.LegislatorOpenState;
+import com.jpw.springboot.model.Post;
+import com.jpw.springboot.model.ProfileData;
+import com.jpw.springboot.model.ProfileTemplate;
 import com.jpw.springboot.model.User;
 //import com.jpw.springboot.model.UserProfile;
 import com.jpw.springboot.service.UserService;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 //import com.jpw.springboot.util.CustomErrorType;
+import com.mongodb.gridfs.GridFSFile;
 
 @RestController
 @RequestMapping("/user")
 public class UserManagementController {
 
 	public static final Logger logger = LoggerFactory.getLogger(UserManagementController.class);
-
+	@Autowired
+	GridFsOperations gridOperations;
+	
 	@Autowired
 	UserService userService;
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -227,5 +242,99 @@ public class UserManagementController {
 		userService.deleteAllUsers();
 		return new ResponseEntity<User>(HttpStatus.OK);
 	}
+	
+	@RequestMapping(value = "/profileData", method = RequestMethod.POST)
+	public ResponseEntity<?> createProfileData(@RequestBody ProfileData profileData,
+			UriComponentsBuilder ucBuilder) {
+		logger.info("Creating user ProfileData : {}", profileData);
 
+		profileData = userService.createProfileData(profileData);
+
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.setLocation(ucBuilder.path("/profile/template/{id}").buildAndExpand(profiletemplate.getId()).toUri());
+		return new ResponseEntity<ProfileData>(profileData, HttpStatus.CREATED);
+	}
+	
+	@RequestMapping(value = "/profileData", method = RequestMethod.GET)
+	public ResponseEntity<ProfileData> getUserProfileDataByTemplateId(
+			@PathVariable("userName") String userName,
+			@PathVariable("profileTemplateId") String profileTemplateId) {
+		ProfileData profileData = null;
+		List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, profileTemplateId);
+		if(profileDatas != null && profileDatas.size() > 0){
+			profileData = profileDatas.get(0);
+		}
+
+		return new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/profileData", method = RequestMethod.PUT)
+	public ResponseEntity<?> updateProfileData(@RequestBody ProfileData profileData,
+			UriComponentsBuilder ucBuilder) {
+		logger.info("Creating user ProfileData : {}", profileData);
+
+		profileData = userService.saveProfileData(profileData);
+
+		return new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/uploadUserSmProfileImage", method = RequestMethod.POST)
+	public ResponseEntity<?> uploadUserSmProfileImage(@ModelAttribute FormDataWithFile formDataWithFile,
+			UriComponentsBuilder ucBuilder) {
+		
+		ObjectMapper mapper = new ObjectMapper();
+		User user = null;
+		InputStream inputStream = null;
+
+		try {
+			MultipartFile file = formDataWithFile.getFile();
+			String userData = formDataWithFile.getPost();
+			
+			user = mapper.readValue(userData, User.class);
+			List<ProfileTemplate> profileTemplates = user.getProfileTemplates();
+			String profileTemplateId = null;
+			if(profileTemplates != null && profileTemplates.size() > 0){
+				profileTemplateId = profileTemplates.get(0).getProfileTemplateId();
+			}
+			
+			//post = postService.createPost(post);
+			if (file != null) {
+				String fileName = StringUtils.cleanPath(file.getOriginalFilename());
+				inputStream = file.getInputStream();
+				DBObject metaData = new BasicDBObject();
+				//metaData.put("postId", post.getId());
+				metaData.put("username", user.getUsername());
+				metaData.put("imageType", "USERSMPROFILEIMAGE");
+				//TODO
+				//MAKE FILE UPLOAD AS REUSABLE, CHANGE THE FILE TYPE
+				GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, "image/png", metaData);
+				String fileId = gridFsFile.getId().toString();
+				ProfileData profileData = userService.updateUserProfileData(user.getUsername(), profileTemplateId, "profileSMImageId", fileId);
+				if(user.getProfileDatas() != null)
+					user.getProfileDatas().add(profileData);
+				else{
+					List<ProfileData> profileDatas = new ArrayList<ProfileData>();
+					profileDatas.add(profileData);
+					user.setProfileDatas(profileDatas);
+				}
+				//TODO
+				//update file id with user template data, also if possible capture the current session user
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (inputStream != null) {
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return new ResponseEntity<User>(user, HttpStatus.OK);
+	}
+
+	//request to get the uploaded image file
+	//refer postcontroller
 }

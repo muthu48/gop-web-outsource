@@ -76,11 +76,27 @@ public class PostManagementController {
 	}
 
 	@RequestMapping(value = "downloadFile/{id}", method = RequestMethod.GET)
-	public ResponseEntity<?> getFileRelatedToPost(@PathVariable("id") String id) {
+	public ResponseEntity<?> downloadFile(@PathVariable("id") String id) {
 		logger.info("Fetching file  with id {}", id);
 
 		// BasicDBObject query = new BasicDBObject("metadata.postId", id);
 		GridFSDBFile file = gridOperations.findOne(new Query(Criteria.where("_id").is(id)));
+		
+		if(file !=null) {
+			return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
+				.body(new InputStreamResource(file.getInputStream()));
+		}
+		return new ResponseEntity<Post>(HttpStatus.NO_CONTENT);
+		
+
+	}
+
+	@RequestMapping(value = "downloadFile/user/{userId}", method = RequestMethod.GET)
+	public ResponseEntity<?> downloadFileByUser(@PathVariable("userId") String userId) {
+		logger.info("Fetching file  with userId {}", userId);
+
+		// BasicDBObject query = new BasicDBObject("metadata.postId", id);
+		GridFSDBFile file = gridOperations.findOne(new Query(Criteria.where("metadata.username").is(userId)));
 		
 		if(file !=null) {
 			return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
@@ -127,9 +143,9 @@ public class PostManagementController {
 				metaData.put("postId", post.getId());
 				metaData.put("userId", post.getUserId());
 				GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, "image/png", metaData);
-				//List<String> existingRelatedFiles = post.getRelatedFiles();
+				String fileId = gridFsFile.getId().toString();
 				List<String> relatedFiles  = new ArrayList<String>();
-				relatedFiles.add(gridFsFile.getId().toString());
+				relatedFiles.add(fileId);
 				post.setRelatedFiles(relatedFiles);
 				postService.updatePost(post);
 			}

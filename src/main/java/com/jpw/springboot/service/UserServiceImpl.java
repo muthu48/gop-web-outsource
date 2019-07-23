@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +20,8 @@ import com.jpw.springboot.model.UserProfile;
 import com.jpw.springboot.repositories.LegislatorOpenStateRepository;
 import com.jpw.springboot.repositories.ProfileDataRepository;
 import com.jpw.springboot.repositories.UserRepository;
+import com.mongodb.DBObject;
+import com.mongodb.util.JSON;
 
 @Service("userService")
 @Transactional
@@ -44,7 +47,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 	private User findByUserName(String name) {
 		User user = userRepository.findByUsername(name);
-		
+
+		//CAN BE DONE THRU INTERCEPTOR
 		if(user != null)
 			user.setPassword(null);
 		
@@ -139,6 +143,30 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	public List<ProfileData> getProfileData(String entityId){
 		List<ProfileData> profileDataList = profileDataRepository.findByEntityId(entityId);
 		return profileDataList;		
+	}
+	
+	public List<ProfileData> getProfileDataByProfileTemplateId(String entityId, String profileTemplateId){
+		List<ProfileData> profileDataList = profileDataRepository.findByEntityIdAndProfileTemplateId(entityId, profileTemplateId);
+		return profileDataList;		
+	}
+	
+	public ProfileData updateUserProfileData(String entityId, String profileTemplateId, String key, String value){
+		//TODO
+		//profileTemplateId = "upCongressLegislatorDefault"
+		//get the profile data, set the biodata template with profile image id and then set the profile data	
+		ProfileData profileData = null;
+		List<ProfileData> profileDatas = getProfileDataByProfileTemplateId(entityId, profileTemplateId);
+		if(profileDatas != null && profileDatas.size() > 0){
+			profileData = profileDatas.get(0); // one profiledata exist for a give profileTemplateId
+			JSONObject obj = profileData.getJSONData();
+			//obj.put("profileSMImageId", value);
+			obj.put(key, value);
+			DBObject dbObject = (DBObject)JSON.parse(obj.toString());
+			profileData.setData(dbObject);
+			this.saveProfileData(profileData);
+		}
+		
+		return profileData;
 	}
 	
 	@Override

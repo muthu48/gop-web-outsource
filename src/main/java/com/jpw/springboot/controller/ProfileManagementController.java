@@ -140,26 +140,5 @@ public class ProfileManagementController {
 		return new ResponseEntity<ProfileTemplate>(profileTemplate, HttpStatus.OK);
 	}*/
 	
-	@RequestMapping(value = "/user/profileData", method = RequestMethod.POST)
-	public ResponseEntity<?> createProfileData(@RequestBody ProfileData profileData,
-			UriComponentsBuilder ucBuilder) {
-		logger.info("Creating user ProfileData : {}", profileData);
-
-		profileData = userService.createProfileData(profileData);
-
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.setLocation(ucBuilder.path("/profile/template/{id}").buildAndExpand(profiletemplate.getId()).toUri());
-		return new ResponseEntity<ProfileData>(profileData, HttpStatus.CREATED);
-	}
-
-	@RequestMapping(value = "/user/profileData", method = RequestMethod.PUT)
-	public ResponseEntity<?> updateProfileData(@RequestBody ProfileData profileData,
-			UriComponentsBuilder ucBuilder) {
-		logger.info("Creating user ProfileData : {}", profileData);
-
-		profileData = userService.saveProfileData(profileData);
-
-		return new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
-	}
 
 }

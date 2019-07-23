@@ -1,7 +1,9 @@
 package com.jpw.springboot.model;
 
+import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
 
+import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
 //CONTAINS THE DATA FOR ANY ENTITY PROFILE TEMPLATE, 
 //PROFILE DATA CHANGE IS HANDLED BY THIS ENTITY 
@@ -9,7 +11,7 @@ public class ProfileData {
 	@Id	
 	private String id; // not required	
 	private String profileTemplateId; //references profileTemplateId of ProfileTemplate
-	private Object data;
+	private DBObject data;
 	private String entityId;
 	private String entityType;
 	
@@ -19,10 +21,13 @@ public class ProfileData {
 	public void setProfileTemplateId(String profileTemplateId) {
 		this.profileTemplateId = profileTemplateId;
 	}
-	public Object getData() {
+	public DBObject getData() {
 		return data;
 	}
-	public void setData(Object data) {
+	public JSONObject getJSONData(){
+		return new JSONObject(JSON.serialize(this.getData())); 
+	}
+	public void setData(DBObject data) {
 		this.data = data;
 	}
 	public String getEntityId() {

@@ -31,5 +31,8 @@ public interface UserService {
 	public ProfileData createProfileData(ProfileData profileData);
 	public ProfileData saveProfileData(ProfileData profileData);
 	public List<ProfileData> getProfileData(String entityId);
+	public List<ProfileData> getProfileDataByProfileTemplateId(String entityId, String profileTemplateId);
+	public ProfileData updateUserProfileData(String entityId, String profileTemplateId, String key, String value);
+
 	
 }
