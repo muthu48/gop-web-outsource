@@ -1,9 +1,11 @@
 package com.jpw.springboot.controller;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -12,6 +14,7 @@ import org.bson.BSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -22,6 +25,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,13 +33,16 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jpw.springboot.model.LegislatorCongressGT;
 import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.Post;
 import com.jpw.springboot.model.ProfileData;
 import com.jpw.springboot.model.ProfileTemplate;
 import com.jpw.springboot.model.User;
+import com.jpw.springboot.service.LegislatorDataProcessingService;
 //import com.jpw.springboot.model.UserProfile;
 import com.jpw.springboot.service.UserService;
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 //import com.jpw.springboot.util.CustomErrorType;
@@ -53,13 +60,16 @@ public class UserManagementController {
 	UserService userService;
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
 	
+	@Autowired
+	private LegislatorDataProcessingService legislatorDataProcessingService;
+	
 	public UserManagementController(BCryptPasswordEncoder bCryptPasswordEncoder){
 		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
 	}
 	
 	@RequestMapping(value = "/getAllUsers", method = RequestMethod.GET)
 	public ResponseEntity<List<User>> listAllUsers() {
-		List<User> users = null;//userService.findAllUsers();
+		List<User> users = userService.findAllUsers();
 		if (users.isEmpty()) {
 			return new ResponseEntity(HttpStatus.NO_CONTENT);
 		}
@@ -94,7 +104,7 @@ public class UserManagementController {
 	}
 
 	@RequestMapping(value = "/legis/{userName}", method = RequestMethod.GET)
-	public ResponseEntity<?> getLegisUser(@PathVariable("userName") String userName) {
+	public ResponseEntity<?> getLegislatorUser(@PathVariable("userName") String userName) {
 		logger.info("Fetching Legislator by userName " + userName);
 
 		ResponseEntity response = null;
@@ -105,6 +115,24 @@ public class UserManagementController {
 
 		}catch(Exception e){
 			response = new ResponseEntity("Legislator with username " + userName + " not found", HttpStatus.NOT_FOUND);
+		}
+		
+		return response;
+
+	}
+
+	@RequestMapping(value = "/legis/congress/{userName}", method = RequestMethod.GET)
+	public ResponseEntity<?> getLegislatorCongressUser(@PathVariable("userName") String userName) {
+		logger.info("Fetching Congress Legislator by userName " + userName);
+
+		ResponseEntity response = null;
+		User user = null;
+		try{
+			user = userService.getUser(userName, "legislatorCongress");
+			response = new ResponseEntity<User>(user, HttpStatus.OK);
+
+		}catch(Exception e){
+			response = new ResponseEntity("Congress Legislator with username " + userName + " not found", HttpStatus.NOT_FOUND);
 		}
 		
 		return response;
@@ -129,8 +157,56 @@ public class UserManagementController {
 
 	}
 
+	@RequestMapping(value = "/legisv1/congress/{userName}", method = RequestMethod.GET)
+	public ResponseEntity<?> getLegislatorCongress(@PathVariable("userName") String userName) {
+		logger.info("Fetching Legislator by userName " + userName);
+
+		ResponseEntity response = null;
+		LegislatorCongressGT user = null;
+		try{
+			user = userService.findLegislatorCongress(userName);
+			response = new ResponseEntity<LegislatorCongressGT>(user, HttpStatus.OK);
+
+		}catch(Exception e){
+			response = new ResponseEntity("Retrieving Legislator with username " + userName + ", " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return response;
+
+	}
+
+	//USED
+	//Get Biodata for Legislator
+	@RequestMapping(value = "/legis/biodata/{userName}/", method = RequestMethod.GET)
+	public ResponseEntity<ProfileData> getLegislatorBiodata(@RequestHeader("userType") String userType, @PathVariable("userName") String userName) {
+		logger.info("Fetching Legislator Biodata by userName " + userName);
+
+		ResponseEntity response = null;
+		try{
+			
+			ProfileData profileData = null;
+			String profileName = (userType.equalsIgnoreCase("internal") ? "upDefault" : "upCongressLegislatorExternal");
+			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, profileName);
+			if(profileDatas != null && profileDatas.size() > 0){
+				profileData = profileDatas.get(0);
+				response = new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
+
+			}else{
+				response = new ResponseEntity("No Data found", HttpStatus.NOT_FOUND);
+
+			}
+
+		}catch(Exception e){
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return response;
+
+	}
+
+	//Get Roles for Openstate
 	@RequestMapping(value = "/legisv1/roles/{userName}", method = RequestMethod.GET)
-	public ResponseEntity<?> getLegislatorRoles(@PathVariable("userName") String userName) {
+	public ResponseEntity<?> getLegislatorRolesOS(@PathVariable("userName") String userName) {
 		logger.info("Fetching Legislator by userName " + userName);
 
 		ResponseEntity response = null;
@@ -159,7 +235,182 @@ public class UserManagementController {
 		return response;
 
 	}
+	
+	//NOT USED
+	//Get Roles for Congress - in terms of ProfileData
+	@RequestMapping(value = "/legisv1/congress/rolesv1/{userName}", method = RequestMethod.GET)
+	public ResponseEntity<ProfileData> getLegislatorRolesCongress(@PathVariable("userName") String userName) {
+		logger.info("Fetching Congress Legislator by userName " + userName);
 
+		ResponseEntity response = null;
+		LegislatorCongressGT user = null;
+		ArrayList arrRoles = null;
+		try{
+			
+			ProfileData profileData = null;
+			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, "upRole");
+			if(profileDatas != null && profileDatas.size() > 0){
+				profileData = profileDatas.get(0);//PICKING ONE TO USE IT IN THE RESPONSE
+				BasicDBList profileDataList = new BasicDBList();
+				for(ProfileData profile : profileDatas){
+					profileDataList.add(profile.getData());
+				}
+				profileData.setDataList(profileDataList);
+				response = new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
+
+			}else{
+				response = new ResponseEntity("No Data found", HttpStatus.NOT_FOUND);
+
+			}
+
+		}catch(Exception e){
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return response;
+
+	}
+	
+	//USED
+	//Get Roles for Congress
+	@RequestMapping(value = "/legisv1/congress/roles/{userName}", method = RequestMethod.GET)
+	public ResponseEntity<ArrayList> getLegislatorRolesCongressV1(@PathVariable("userName") String userName) {
+		logger.info("Fetching Congress Legislator by userName " + userName);
+
+		ResponseEntity response = null;
+		ArrayList arrRoles = null;
+		try{
+			
+			ProfileData profileData = null;
+			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, "upRole");
+			if(profileDatas != null && profileDatas.size() > 0){
+				Collections.sort(profileDatas); //sort by desc order based on start date
+				arrRoles = new ArrayList<>();
+				for(ProfileData profile : profileDatas){
+					arrRoles.add(profile.getData());
+				}
+				response = new ResponseEntity<ArrayList>(arrRoles, HttpStatus.OK);
+
+			}else{
+				response = new ResponseEntity("No Data found", HttpStatus.NOT_FOUND);
+
+			}
+
+		}catch(Exception e){
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return response;
+
+	}
+
+	//Get Roles for Openstate legislators
+	@RequestMapping(value = "/legisv1/offices/{userName}", method = RequestMethod.GET)
+	public ResponseEntity<?> getLegislatorOfficesOS(@PathVariable("userName") String userName) {
+		logger.info("Fetching Legislator Offices by userName " + userName);
+
+		ResponseEntity response = null;
+		LegislatorOpenState user = null;
+		ArrayList arrOffices = null;
+		try{
+			user = userService.findLegislator(userName);
+			if(user.getOffices() != null && user.getOffices().size() > 0){
+				arrOffices = user.getOffices();
+				response = new ResponseEntity<ArrayList>(arrOffices, HttpStatus.OK);
+
+			}else{
+			
+				response = new ResponseEntity<ArrayList>(arrOffices, HttpStatus.NOT_FOUND);
+			}
+
+		}catch(Exception e){
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return response;
+
+	}
+	
+	//Get Roles for Congress
+	@RequestMapping(value = "/legisv1/congress/offices/{userName}", method = RequestMethod.GET)
+	public ResponseEntity<?> getLegislatorOfficesCongress(@PathVariable("userName") String userName) {
+		logger.info("Fetching Legislator Offices by userName " + userName);
+
+		ResponseEntity response = null;
+		ArrayList arrOffices = null;
+		try{
+			
+			ProfileData profileData = null;
+			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, "upOffices");
+			if(profileDatas != null && profileDatas.size() > 0){
+				Collections.sort(profileDatas); //sort by desc order based on start date
+				arrOffices = new ArrayList<>();
+				for(ProfileData profile : profileDatas){
+					arrOffices.add(profile.getData());
+				}
+				response = new ResponseEntity<ArrayList>(arrOffices, HttpStatus.OK);
+
+			}else{
+				response = new ResponseEntity("No Data found", HttpStatus.NOT_FOUND);
+
+			}
+
+		}catch(Exception e){
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return response;
+
+	}
+
+	/* load data from data/congress/congress-legislators-govtrack/legislators-current.json
+	 * insert record into legislatorcongress entity
+	 * insert 3 records into ProfileData entity
+	 * with ProfileTemplateId-upCongressLegislatorExternal, upRole, upOffices / EntityType-LEGISLATORCONGRESS, id.bioguide as user/username
+	 * */
+	@RequestMapping(value = "/legis/loadCongressLegislatorsToDb", method = RequestMethod.POST)	
+	public ResponseEntity loadCongressLegislatorsToDb() {
+		logger.info("loadCongressLegislatorsToDb data/congress/congress-legislators-govtrack/legislators-current.json");
+
+		ResponseEntity response = null;
+		File file;
+		try {
+			file = new ClassPathResource("data/congress/congress-legislators-govtrack/legislators-current.json").getFile();
+			legislatorDataProcessingService.loadCongressLegislatorsToDb(file);	
+			response = new ResponseEntity("data loaded successfully", HttpStatus.OK);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+
+	}
+	
+	/* load data from data/Openstates/pa/legislators
+	 * insert record into legislatoropenstate entity
+	 * insert 3 records into ProfileData entity
+	 * with ProfileTemplateId-upCongressLegislatorExternal, upRole, upOffices / EntityType-LEGISLATOROPENSTATE, leg_id as user/username
+	 * */
+	@RequestMapping(value = "/legis/loadStateLegislatorsToDb", method = RequestMethod.POST)	
+	public ResponseEntity loadStateLegislatorsToDb() {
+		logger.info("loadStateLegislatorsToDb data/Openstates/pa/legislators");
+
+		ResponseEntity response = null;
+		try {
+			legislatorDataProcessingService.loadStateLegislatorsToDb("data/Openstates/pa/legislators");	
+			response = new ResponseEntity("data loaded successfully", HttpStatus.OK);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+
+	}
+	
 	//for Registering User
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public ResponseEntity<?> createUser(@RequestBody User user, UriComponentsBuilder ucBuilder) {
@@ -173,6 +424,8 @@ public class UserManagementController {
 		}*/
 		user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
 		user = userService.createUser(user);
+		
+		userService.createProfileData(user, "publicUser", "upDefault");
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(ucBuilder.path("/api/user/{id}").buildAndExpand(user.getUserId()).toUri());
@@ -255,7 +508,7 @@ public class UserManagementController {
 		return new ResponseEntity<ProfileData>(profileData, HttpStatus.CREATED);
 	}
 	
-	@RequestMapping(value = "/profileData", method = RequestMethod.GET)
+	@RequestMapping(value = "/profileData/{userName}/{profileTemplateId}", method = RequestMethod.GET)
 	public ResponseEntity<ProfileData> getUserProfileDataByTemplateId(
 			@PathVariable("userName") String userName,
 			@PathVariable("profileTemplateId") String profileTemplateId) {

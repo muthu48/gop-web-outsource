@@ -48,8 +48,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 UsernamePasswordAuthenticationFilter.class);
       */          
 	  
-	  http.cors().and().csrf().disable().authorizeRequests()
-      .antMatchers(HttpMethod.POST, TokenAuthenticationService.SIGN_UP_URL).permitAll()
+	  http.cors().and().csrf().disable()
+	  .authorizeRequests()
+      //Login url is handled through Angular routing
+	  .antMatchers(HttpMethod.POST, TokenAuthenticationService.SIGN_UP_URL).permitAll()
+	  .antMatchers("/user/legis/**", "/user/legisv1/**").permitAll()
       .anyRequest().authenticated()
       .and()
       .addFilter(new JWTLoginFilter(authenticationManager()))

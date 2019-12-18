@@ -1,6 +1,10 @@
 package com.jpw.springboot.model;
 
+import java.util.ArrayList;
+
 import org.springframework.data.annotation.Id;
+
+import com.mongodb.BasicDBObject;
 
 //PROFILE TEMPLATE DEFINITION, 
 //THIS CAN BE ASSOCIATED WITH ANY ENTITY AS PROFILEDATA
@@ -10,7 +14,7 @@ public class ProfileTemplate {
 	private String profileTemplateId; // STATIC ID
 	private String type;
 	private String name;//DISPLAY NAME
-	private String properties[];
+	private ArrayList<BasicDBObject> properties;
 	
 	public String getId() {
 		return id;
@@ -62,7 +66,7 @@ public class ProfileTemplate {
 	/**
 	 * @return the properties
 	 */
-	public String[] getProperties() {
+	public ArrayList<BasicDBObject> getProperties() {
 		return properties;
 	}
 
@@ -70,7 +74,7 @@ public class ProfileTemplate {
 	 * @param properties
 	 *            the properties to set
 	 */
-	public void setProperties(String[] properties) {
+	public void setProperties(ArrayList<BasicDBObject> properties) {
 		this.properties = properties;
 	}
 

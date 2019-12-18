@@ -63,7 +63,19 @@ public class ProfileManagementController {
 		}*/
 		return new ResponseEntity<ProfileTemplate>(profiletemplate, HttpStatus.OK);
 	}
-
+	
+/*	@RequestMapping(value = "/data/{entityid}", method = RequestMethod.GET)
+	public ResponseEntity<?> getProfileData(@PathVariable("id") String id) {
+		logger.info("Fetching ProfileTemplate with id {}", id);
+		ProfileTemplate profiletemplate = profileTemplateService.findById(id);
+		if (profiletemplate == null) {
+			logger.error("ProfileTemplate with id {} not found.", id);
+			return new ResponseEntity(new CustomErrorType("ProfileTemplate with id " + id + " not found"),
+					HttpStatus.NOT_FOUND);
+		}
+		return new ResponseEntity<ProfileTemplate>(profiletemplate, HttpStatus.OK);
+	}
+*/	
 	@RequestMapping(value = "/template", method = RequestMethod.POST)
 	public ResponseEntity<?> createProfileTemplate(@RequestBody ProfileTemplate profiletemplate,
 			UriComponentsBuilder ucBuilder) {

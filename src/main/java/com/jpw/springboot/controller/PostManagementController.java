@@ -91,7 +91,7 @@ public class PostManagementController {
 
 	}
 
-	@RequestMapping(value = "downloadFile/user/{userId}", method = RequestMethod.GET)
+	@RequestMapping(value = "downloadFile/user/{userId}/", method = RequestMethod.GET)
 	public ResponseEntity<?> downloadFileByUser(@PathVariable("userId") String userId) {
 		logger.info("Fetching file  with userId {}", userId);
 

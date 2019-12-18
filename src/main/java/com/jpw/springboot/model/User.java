@@ -7,16 +7,21 @@ import org.springframework.data.annotation.Id;
 public class User {
 	@Id	
 	private String userId;
-	//private String userName;
-	private String username;
-	//private String userPassword;
+	private String username; //email/phone
 	private String password;
-
 	private String userType;//USER, LEGISLATOR, publicUser
-	private String status;
-	private String sourceSystem;
+	private String status = "active"; //active
+	private String sourceSystem; //GOVTRACK/OPENSTATE
 	private String sourceId;	
+	
+	//shall be part of UserProfile - upCongressLegislatorDefault
+	private String firstName;
+	private String lastName;
 	private String emailId;
+	private String phone;
+	private String address;
+	
+	
 	private Enum tagName;
 	private List<Connection> connections;
 	private UserProfile userProfile; // contains profileTemplates, profileDatas
@@ -24,8 +29,8 @@ public class User {
 	//Available Templates for an user
 	//Depends on EntityType
 	private List<ProfileTemplate> profileTemplates;		
-	
 	//contains Data for each associated Template
+
 	private List<ProfileData> profileDatas;		
 	//private LegislatorOpenState legislatorOpenState;	
 	
@@ -149,7 +154,15 @@ public class User {
 	public void setEmailId(String emailId) {
 		this.emailId = emailId;
 	}
-	
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
 	public List<ProfileData> getProfileDatas() {
 		return profileDatas;
 	}
@@ -196,6 +209,30 @@ public class User {
 
 	public void setProfileTemplates(List<ProfileTemplate> profileTemplates) {
 		this.profileTemplates = profileTemplates;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public String getLastName() {
+		return lastName;
+	}
+
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
 	}
 
 }

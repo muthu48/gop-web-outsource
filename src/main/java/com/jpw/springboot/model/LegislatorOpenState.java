@@ -8,6 +8,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
 @Document(collection="legislatoropenstate")
@@ -18,7 +19,7 @@ public class LegislatorOpenState {
 
 	private String last_name;
 	//private JSONArray sources;//[["url":""]]
-	private ArrayList sources;
+	private ArrayList<BasicDBObject> sources;
 	/*
 	 [
       {
@@ -30,7 +31,7 @@ public class LegislatorOpenState {
    ]
 	 */
 	private String full_name;
-	private DBObject old_roles;//{"year range":[{}], "year range":[{}]}
+	private BasicDBObject old_roles;//{"year range":[{}], "year range":[{}]}
 	/*
 	 {
       "2009-2010":[
@@ -62,7 +63,7 @@ public class LegislatorOpenState {
 	private String legId;//"PAL000001"
 	private boolean active;//true
 	private String photo_url;//"http://www.legis.state.pa.us/images/members/200/1187.jpg",
-	private ArrayList<JSONObject> roles;//[{}]
+	private ArrayList<BasicDBObject> roles;//[{}]
 	/*
 	 {
          "term":"2017-2018",
@@ -77,7 +78,7 @@ public class LegislatorOpenState {
       */
 	private String url; 
 	private String chamber;
-	private ArrayList offices;//Position[]
+	private ArrayList<BasicDBObject> offices;//Position[]
 	/*
 	 {
         "fax":"717-772-2753",
@@ -94,10 +95,10 @@ public class LegislatorOpenState {
 	public void setLast_name(String last_name) {
 		this.last_name = last_name;
 	}
-	public ArrayList getSources() {
+	public ArrayList<BasicDBObject> getSources() {
 		return sources;
 	}
-	public void setSources(ArrayList sources) {
+	public void setSources(ArrayList<BasicDBObject> sources) {
 		this.sources = sources;
 	}
 	public String getFull_name() {
@@ -106,10 +107,10 @@ public class LegislatorOpenState {
 	public void setFull_name(String full_name) {
 		this.full_name = full_name;
 	}
-	public DBObject getOld_roles() {
+	public BasicDBObject getOld_roles() {
 		return old_roles;
 	}
-	public void setOld_roles(DBObject old_roles) {
+	public void setOld_roles(BasicDBObject old_roles) {
 		this.old_roles = old_roles;
 	}
 	public String getFirst_name() {
@@ -179,10 +180,10 @@ public class LegislatorOpenState {
 	public void setPhoto_url(String photo_url) {
 		this.photo_url = photo_url;
 	}
-	public ArrayList<JSONObject> getRoles() {
+	public ArrayList<BasicDBObject> getRoles() {
 		return roles;
 	}
-	public void setRoles(ArrayList<JSONObject> roles) {
+	public void setRoles(ArrayList<BasicDBObject> roles) {
 		this.roles = roles;
 	}
 	public String getUrl() {
@@ -197,10 +198,10 @@ public class LegislatorOpenState {
 	public void setChamber(String chamber) {
 		this.chamber = chamber;
 	}
-	public ArrayList getOffices() {
+	public ArrayList<BasicDBObject> getOffices() {
 		return offices;
 	}
-	public void setOffices(ArrayList offices) {
+	public void setOffices(ArrayList<BasicDBObject> offices) {
 		this.offices = offices;
 	}
 	public String getId() {

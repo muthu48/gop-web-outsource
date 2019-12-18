@@ -13,13 +13,17 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.gson.Gson;
+import com.jpw.springboot.model.LegislatorCongressGT;
 import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.ProfileData;
 import com.jpw.springboot.model.User;
 import com.jpw.springboot.model.UserProfile;
+import com.jpw.springboot.repositories.LegislatorCongressGTRepository;
 import com.jpw.springboot.repositories.LegislatorOpenStateRepository;
 import com.jpw.springboot.repositories.ProfileDataRepository;
 import com.jpw.springboot.repositories.UserRepository;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
 
@@ -35,7 +39,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	
 	@Autowired
 	private LegislatorOpenStateRepository legislatorOpenStateRepository;
-
+	
+	@Autowired
+	private LegislatorCongressGTRepository legislatorCongressRepository;
+	
 	public User findById(String id) {
 		User user = userRepository.findOne(id);
 		
@@ -60,26 +67,45 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		LegislatorOpenState legislator = legislatorOpenStateRepository.findByLegId(name);
 		return legislator;
 	}
+
+	public LegislatorCongressGT findLegislatorCongress(String name) {
+		//BasicDBObject bObj = new BasicDBObject();
+		//bObj.append("id.govtrack", Integer.parseInt(name));
+		List<LegislatorCongressGT> legislators = legislatorCongressRepository.findByIdGovtrack(Integer.parseInt(name));
+		//legislators = legislatorCongressRepository.findById(bObj);
+		LegislatorCongressGT legislator = null;
+		
+		if(legislators != null && legislators.size() > 0)
+			legislator = legislators.get(0);
+		
+		return legislator;
+	}
 	
-	public User getUser(String name, String userType) throws Exception{
+	public User getUser(String username, String userType) throws Exception{
 		boolean createUserProfile = false;
-		User user = findByUserName(name);
+		User user = findByUserName(username);
 		if(user == null){
 			if(!userType.equalsIgnoreCase("publicUser")){ //CREATE PROFILE FOR NON-PUBLIC USER AND KEEP IT INACTIVE
 				createUserProfile = true;
 				user = new User();
-				user.setUsername(name);
+				user.setUsername(username);
 				user.setStatus("INACTIVE");
 			}else{
-				throw new Exception("User not found - " + name);
+				throw new Exception("User not found - " + username);
 			}
 		}	
 		
 		if(userType.equalsIgnoreCase("legislator")){
-			LegislatorOpenState legislator = findLegislator(name);		
+			LegislatorOpenState legislator = findLegislator(username);//find by legid which is set as username		
 			if(createUserProfile && legislator != null){
-				//user.setLegislatorOpenState(legislator);
 				user.setSourceId(legislator.getLegId());
+			}
+		}	
+
+		if(userType.equalsIgnoreCase("legislatorCongress")){
+			LegislatorCongressGT legislator = findLegislatorCongress(username);//find by govtrack id, not username		
+			if(createUserProfile && legislator != null){
+				//user.setSourceId(legislator.getId());
 			}
 		}	
 		
@@ -114,7 +140,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 
 	public List<User> findAllUsers() {
-		return null;//userRepository.findAll();
+		return userRepository.findAll();
 	}
 
 	public boolean isUserExist(User user) {
@@ -130,6 +156,27 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	@Override
 	public boolean isUserExist(UserProfile user) {
 		return findByUserName(user.getUserId()) != null;
+	}
+	
+	public ProfileData createProfileData(User user, String entityType, String profileTemplateId){
+		//upDefault profileData
+    	JSONObject profileDataObj = new JSONObject();
+    	profileDataObj.put("first_name", user.getFirstName());
+    	profileDataObj.put("last_name", user.getLastName());
+    	profileDataObj.put("emailId", user.getEmailId());
+    	profileDataObj.put("phone", user.getPhone());
+    	profileDataObj.put("address", user.getAddress());
+
+    	ProfileData profileData = new ProfileData();
+	    Gson gson = new Gson();
+    	BasicDBObject profileDataDBObj = gson.fromJson(profileDataObj.toString(), BasicDBObject.class);
+    	profileData.setEntityId(user.getUsername());
+    	profileData.setEntityType(entityType);
+    	profileData.setProfileTemplateId(profileTemplateId);
+    	profileData.setData(profileDataDBObj);
+    	profileDataRepository.insert(profileData);
+    	
+		return profileData;
 	}
 	
 	public ProfileData createProfileData(ProfileData profileData){
@@ -161,7 +208,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 			JSONObject obj = profileData.getJSONData();
 			//obj.put("profileSMImageId", value);
 			obj.put(key, value);
-			DBObject dbObject = (DBObject)JSON.parse(obj.toString());
+			BasicDBObject dbObject = (BasicDBObject)JSON.parse(obj.toString());
 			profileData.setData(dbObject);
 			this.saveProfileData(profileData);
 		}

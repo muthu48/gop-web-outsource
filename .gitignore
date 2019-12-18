@@ -1,12 +1,13 @@
 # Directories #
 build/
 bin/
-/target/**
+target/classes/
 libs/
 tmp/
 node_modules/
 jaxws/jaxws-client/src/main/
 jaxws/jaxws-endpoint/src/main/webapp/WEB-INF/wsdl/
+src/main/resources/data/
  
 # OS Files #
 .DS_Store
