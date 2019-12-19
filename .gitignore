@@ -1,6 +1,7 @@
 # Directories #
 build/
 bin/
+target/
 target/classes/
 libs/
 tmp/
