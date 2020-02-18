@@ -1,8 +1,13 @@
 package com.jpw.springboot.service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,12 +22,15 @@ import com.google.gson.Gson;
 import com.jpw.springboot.model.LegislatorCongressGT;
 import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.ProfileData;
+import com.jpw.springboot.model.ProfileTemplate;
 import com.jpw.springboot.model.User;
 import com.jpw.springboot.model.UserProfile;
 import com.jpw.springboot.repositories.LegislatorCongressGTRepository;
 import com.jpw.springboot.repositories.LegislatorOpenStateRepository;
 import com.jpw.springboot.repositories.ProfileDataRepository;
+import com.jpw.springboot.repositories.ProfileTemplateRepository;
 import com.jpw.springboot.repositories.UserRepository;
+import com.jpw.springboot.util.SystemConstants;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
@@ -33,7 +41,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 	@Autowired
 	private UserRepository userRepository;
-	
+		
 	@Autowired
 	private ProfileDataRepository profileDataRepository;
 	
@@ -42,6 +50,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	
 	@Autowired
 	private LegislatorCongressGTRepository legislatorCongressRepository;
+	
+	@Autowired
+	private ProfileTemplateService profileTemplateService;
 	
 	public User findById(String id) {
 		User user = userRepository.findOne(id);
@@ -69,10 +80,19 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 
 	public LegislatorCongressGT findLegislatorCongress(String name) {
-		//BasicDBObject bObj = new BasicDBObject();
-		//bObj.append("id.govtrack", Integer.parseInt(name));
 		List<LegislatorCongressGT> legislators = legislatorCongressRepository.findByIdGovtrack(Integer.parseInt(name));
-		//legislators = legislatorCongressRepository.findById(bObj);
+		
+		LegislatorCongressGT legislator = null;
+		
+		if(legislators != null && legislators.size() > 0)
+			legislator = legislators.get(0);
+		
+		return legislator;
+	}
+
+	public LegislatorCongressGT findLegislatorCongressByBioguide(String name) {
+		List<LegislatorCongressGT> legislators = legislatorCongressRepository.findByIdBioguide(name);
+		
 		LegislatorCongressGT legislator = null;
 		
 		if(legislators != null && legislators.size() > 0)
@@ -83,32 +103,51 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	
 	public User getUser(String username, String userType) throws Exception{
 		boolean createUserProfile = false;
+		List<String> profileTemplateIdsList = new ArrayList<String>();
+
 		User user = findByUserName(username);
+				
 		if(user == null){
-			if(!userType.equalsIgnoreCase("publicUser")){ //CREATE PROFILE FOR NON-PUBLIC USER AND KEEP IT INACTIVE
+			if(!userType.equalsIgnoreCase(SystemConstants.PUBLIC_USERTYPE)){ //CREATE PROFILE FOR NON-PUBLIC USER AND KEEP IT INACTIVE
 				createUserProfile = true;
 				user = new User();
 				user.setUsername(username);
-				user.setStatus("INACTIVE");
+				user.setStatus("PASSIVE");//CHANGED THE STATUS FROM INACTIVE TO PASSIVE
 			}else{
 				throw new Exception("User not found - " + username);
 			}
-		}	
-		
-		if(userType.equalsIgnoreCase("legislator")){
-			LegislatorOpenState legislator = findLegislator(username);//find by legid which is set as username		
-			if(createUserProfile && legislator != null){
-				user.setSourceId(legislator.getLegId());
+		}else{
+			//get profiledata
+			List<ProfileData> profileDatas = getProfileDatas(username);
+			user.setProfileDatas(profileDatas);
+			
+			for(ProfileData profileData:profileDatas){
+				if(!profileTemplateIdsList.contains(profileData.getProfileTemplateId())){
+					profileTemplateIdsList.add(profileData.getProfileTemplateId());
+				}
 			}
-		}	
+			//get profile
+			List<ProfileTemplate> profileTemplates = profileTemplateService.findAllProfileTemplatesByIds(profileTemplateIdsList);
+			user.setProfileTemplates(profileTemplates);
 
-		if(userType.equalsIgnoreCase("legislatorCongress")){
-			LegislatorCongressGT legislator = findLegislatorCongress(username);//find by govtrack id, not username		
-			if(createUserProfile && legislator != null){
-				//user.setSourceId(legislator.getId());
-			}
 		}	
 		
+		if(userType != null && userType.equalsIgnoreCase(SystemConstants.STATELEGIS_USERTYPE)){
+			if(user.getSourceSystem() != null && user.getSourceSystem().equalsIgnoreCase(SystemConstants.OPENSTATE_LEGIS_SOURCE)){
+				LegislatorOpenState legislator = findLegislator(username);//find by legid which is set as username		
+				if(createUserProfile && legislator != null){
+					user.setSourceId(legislator.getLegId());
+				}
+			}			
+			if(user.getSourceSystem() != null && user.getSourceSystem().equalsIgnoreCase(SystemConstants.GOVTRACK_LEGIS_SOURCE)){
+				//if(userType != null && userType.equalsIgnoreCase(SystemConstants.CONGRESSLEGIS_USERTYPE)){
+					LegislatorCongressGT legislatorCongressGT = findLegislatorCongressByBioguide(username);//by id.bioguide		
+					if(createUserProfile && legislatorCongressGT != null){
+						//user.setSourceId(legislator.getId());
+					}
+				//}
+			}	
+		}
 		/*
 		 if user does not exist, then mark the profile as inactive.
 		 Also shall create an user with inactive profile.
@@ -160,12 +199,30 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	
 	public ProfileData createProfileData(User user, String entityType, String profileTemplateId){
 		//upDefault profileData
+		//how to deal if non-publicuser ?
+		//currently non-publicuser comes through bathc, however have to deal if its realtime
     	JSONObject profileDataObj = new JSONObject();
     	profileDataObj.put("first_name", user.getFirstName());
     	profileDataObj.put("last_name", user.getLastName());
+    	profileDataObj.put("username", user.getUsername());
     	profileDataObj.put("emailId", user.getEmailId());
     	profileDataObj.put("phone", user.getPhone());
     	profileDataObj.put("address", user.getAddress());
+
+    	//check for email/phone pattern with user.getUsername() and set corresponding value
+    	String emailRegex = "^(.+)@(.+)$";
+    	String phoneRegex = "^\\(?([0-9]{3})\\)?[-.\\s]?([0-9]{3})[-.\\s]?([0-9]{4})$"; //North America
+    	Pattern pattern = Pattern.compile(emailRegex);
+        Matcher matcher = pattern.matcher(user.getUsername());
+        if(matcher.matches()){
+        	profileDataObj.put("emailId", user.getUsername());        	
+        }else{
+        	pattern = Pattern.compile(phoneRegex);
+            matcher = pattern.matcher(user.getUsername());
+            if(matcher.matches()){
+            	profileDataObj.put("phone", user.getUsername());        	
+            }
+        }
 
     	ProfileData profileData = new ProfileData();
 	    Gson gson = new Gson();
@@ -184,10 +241,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 	
 	public ProfileData saveProfileData(ProfileData profileData){
-		return profileDataRepository.save(profileData);	
+		ProfileData profileDataDb = profileDataRepository.findOne(profileData.getId());
+		profileDataDb.setData(profileData.getData());
+		return profileDataRepository.save(profileDataDb);	
 	}
 	
-	public List<ProfileData> getProfileData(String entityId){
+	public List<ProfileData> getProfileDatas(String entityId){
 		List<ProfileData> profileDataList = profileDataRepository.findByEntityId(entityId);
 		return profileDataList;		
 	}

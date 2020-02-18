@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -16,6 +17,8 @@ import javax.json.JsonReader;
 import javax.json.JsonValue;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -26,7 +29,10 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
 
+import com.jpw.springboot.controller.UserManagementController;
 import com.jpw.springboot.model.LegislatorCongressGT;
 import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.ProfileData;
@@ -42,6 +48,8 @@ import com.mongodb.util.JSON;
 @Service("legislatorDataProcessingService")
 @Transactional
 public class LegislatorDataProcessingServiceImpl implements LegislatorDataProcessingService {
+	public static final Logger logger = LoggerFactory.getLogger(LegislatorDataProcessingServiceImpl.class);
+
 	@Autowired
 	private LegislatorCongressGTRepository legislatorCongressGTRepository;
 	
@@ -160,8 +168,21 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 	}
 	
 	public void loadStateLegislatorsToDb(String fileLocation) throws Exception{
-		File folder = new ClassPathResource(fileLocation).getFile();
-		File[] listOfFiles = folder.listFiles();
+		System.out.println("Processing STARTED");
+		logger.info("Processing STARTED");
+	    Instant start = Instant.now();
+
+		File folder = new File(fileLocation);//new ClassPathResource(fileLocation).getFile();
+		processFolder(folder);
+	    Instant finish = Instant.now();
+	    long timeElapsed = Duration.between(start, finish).toMillis();  //in millis
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(timeElapsed);
+        System.out.format("%d Milliseconds = %d minutes\n", timeElapsed, minutes );
+
+		System.out.println("Processing COMPLETED");
+		logger.info("Processing COMPLETED");
+
+/*		File[] listOfFiles = folder.listFiles();
 		InputStream fis = null;
 		for (File file : listOfFiles) {
 		    if (file.isFile()) {
@@ -173,8 +194,52 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 		    	loadStateLegislatorToDb(legislatorObj);
 		    }
 		}
+*/	
 	}
+	
+	private void processFolder(File folder) throws Exception{
+		//System.out.println("Processing file/folder " + folder.getName());
+		//logger.info("Processing file/folder " + folder.getName());
+		//File[] listOfFiles = folder.listFiles();
+		InputStream fis = null;
 
+		    	if(!folder.isFile()){//FOLDER
+		    		System.out.println("Processing Folder " + folder.getName());
+		    		logger.info("Processing Folder " + folder.getName());
+		    		
+		    		if(folder.getName().equalsIgnoreCase("legislators")){
+			    		File[] listOfStatesFiles = folder.listFiles();
+			    		System.out.println("Legislators count " + listOfStatesFiles.length);
+			    		logger.info("Legislators count " + listOfStatesFiles.length);
+			    		for (File file : listOfStatesFiles) {
+			    			//FILE
+			    			try{
+					    		System.out.println("Processing File " + file.getName());
+					    		logger.info("Processing File " + file.getName());
+					    		
+								fis = new FileInputStream(file);
+								JsonReader reader = Json.createReader(fis);
+						    	JsonObject legislatorObj = reader.readObject();	 
+								reader.close();
+						    	
+						    	loadStateLegislatorToDb(legislatorObj);
+			    			}catch(Exception e){
+					    		System.out.println("Error in Processing File " + file.getName());
+					    		logger.info("Error in Processing File " + file.getName());
+			    			}
+					    }
+		    		}else{
+		    			File[] listOfFiles = folder.listFiles();
+		    			for(File file:listOfFiles){
+		    				processFolder(file);
+		    			}
+		    		}
+		    	}
+		    
+		
+	
+	}
+	
 	public void loadStateLegislatorToDb(JsonObject legislatorObj) throws Exception{
 		
 	    Gson gson = new Gson();

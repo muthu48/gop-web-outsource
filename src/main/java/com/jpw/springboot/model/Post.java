@@ -3,22 +3,24 @@ package com.jpw.springboot.model;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.web.multipart.MultipartFile;
 
-public class Post {
+public class Post extends AbstractModel{
 	@Id	
 	private String id;		
-	private String userId;
-	private String postType;
+	private String entityId; // userid, districtid, partyid mapped here
+	private String userId;// may not be required
+	private String districtId;// may not be required
+	private String parentPostId;	
+	private String postCategory; //Health, Science, Auto, etc // may not be required
+	private String postType; //V-video / I-image / T -text, 
 	private String postText;
-	private String imageUrl;
-	private String videoUrl;
-	private String parentPostId;
-	private String districtId;
-	private String taggedEntityId;
-	//private MultipartFile file;
+	private String imageUrl;// may not be required
+	private String videoUrl;// may not be required
+	private String[] taggedEntityId;
+	private String[] likedByEntityIds;
 	private List<String> relatedFiles;
-
+	
+    
 	public String getId() {
 		return id;
 	}
@@ -132,4 +134,29 @@ public class Post {
 	public void setRelatedFiles(List<String> relatedFiles) {
 		this.relatedFiles = relatedFiles;
 	}
+
+	public String[] getTaggedEntityId() {
+		return taggedEntityId;
+	}
+
+	public void setTaggedEntityId(String[] taggedEntityId) {
+		this.taggedEntityId = taggedEntityId;
+	}
+
+	public String getEntityId() {
+		return entityId;
+	}
+
+	public void setEntityId(String entityId) {
+		this.entityId = entityId;
+	}
+
+	public String getPostCategory() {
+		return postCategory;
+	}
+
+	public void setPostCategory(String postCategory) {
+		this.postCategory = postCategory;
+	}
+
 }

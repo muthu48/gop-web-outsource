@@ -4,7 +4,7 @@ import java.util.Date;
 
 import org.springframework.data.annotation.Id;
 
-public class Connection {
+public class Connection extends AbstractModel {
 	@Id	
 	private String id;		
 	private String userId;
@@ -21,9 +21,6 @@ public class Connection {
 	private String status; //REQUESTED, CONNECTED, REJECTED, DEACTIVATED, FOLLOWING, UNFOLLOWED
 	private boolean defaultConnected = false; //
 	
-    //@CreatedDate
-    private Date createdDate;
-
 	
 	  public String getUserId() {
 		return userId;
@@ -84,15 +81,5 @@ public class Connection {
 	}
 	public void setDefaultConnected(boolean defaultConnected) {
 		this.defaultConnected = defaultConnected;
-	}
-	public Date getCreatedDate() {
-		return createdDate;
-	}
-	public void setCreatedDate(java.util.Date createdDate) {
-		this.createdDate = createdDate;
-	}
-	public String getId() {
-		return id;
-	}
-	
+	}	
 }

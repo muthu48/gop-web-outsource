@@ -12,4 +12,7 @@ public interface ProfileTemplateRepository extends MongoRepository<ProfileTempla
 
 	ProfileTemplate findByName(String name);
 	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId);
+    List<ProfileTemplate> findByProfileTemplateIdIn(List<String> profileTemplateIds);
+	List<ProfileTemplate> findByType(String type);	
+
 }

@@ -106,7 +106,7 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>GPX-beta</finalName>
+		<finalName>GPX-Services</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

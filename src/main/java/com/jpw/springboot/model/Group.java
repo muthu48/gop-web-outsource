@@ -2,7 +2,7 @@ package com.jpw.springboot.model;
 
 import org.springframework.data.annotation.Id;
 
-public class Group {
+public class Group extends AbstractModel {
 	@Id	
 	private String id;		
 	private String groupName;

@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
@@ -56,11 +58,20 @@ public class PostManagementController {
 
 	@RequestMapping(value = "/getAllPosts", method = RequestMethod.GET)
 	public ResponseEntity<List<Post>> listAllPosts() {
-		List<Post> post = postService.findAllPosts();
-		if (post.isEmpty()) {
+		List<Post> posts = postService.findAllPosts();
+		if (posts.isEmpty()) {
 			return new ResponseEntity(HttpStatus.NO_CONTENT);
 		}
-		return new ResponseEntity<List<Post>>(post, HttpStatus.OK);
+		return new ResponseEntity<List<Post>>(posts, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/getAllPosts/{entityId}/", method = RequestMethod.GET)
+	public ResponseEntity<List<Post>> listAllPostsByEntity(@PathVariable("entityId") String entityId) {
+		List<Post> posts = postService.findAllPosts(entityId);
+		if (posts.isEmpty()) {
+			return new ResponseEntity(HttpStatus.NO_CONTENT);
+		}
+		return new ResponseEntity<List<Post>>(posts, HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
@@ -94,13 +105,18 @@ public class PostManagementController {
 	@RequestMapping(value = "downloadFile/user/{userId}/", method = RequestMethod.GET)
 	public ResponseEntity<?> downloadFileByUser(@PathVariable("userId") String userId) {
 		logger.info("Fetching file  with userId {}", userId);
-
-		// BasicDBObject query = new BasicDBObject("metadata.postId", id);
-		GridFSDBFile file = gridOperations.findOne(new Query(Criteria.where("metadata.username").is(userId)));
 		
-		if(file !=null) {
-			return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
-				.body(new InputStreamResource(file.getInputStream()));
+		Sort sort = new Sort(Sort.Direction.DESC, "uploadDate");
+		//Sort sort = new Sort(new Order(Sort.Direction.DESC, "metadata.uploadDate"));
+
+		List<GridFSDBFile> files = gridOperations.find(new Query(Criteria.where("metadata.username").is(userId))
+												 .with(sort));
+		if(files.size() > 0){
+			GridFSDBFile file = files.get(0);
+			if(file !=null) {
+				return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
+					.body(new InputStreamResource(file.getInputStream()));
+			}
 		}
 		return new ResponseEntity<Post>(HttpStatus.NO_CONTENT);
 		
@@ -135,13 +151,26 @@ public class PostManagementController {
 			String postData = formDataWithFile.getPost();
 			
 			post = mapper.readValue(postData, Post.class);
+			
+			//Indicate PostType with combination of
+			//T-TEXT, I-IMAGE, V-VIDEO
+			StringBuilder strBuilder = new StringBuilder();
+		    if(!StringUtils.isEmpty(post.getPostText())){
+		    	strBuilder.append("T");    
+		    }
+			if (file != null) {
+		    	strBuilder.append("I");    
+		    }
+			post.setPostType(strBuilder.toString());
+
 			post = postService.createPost(post);
 			if (file != null) {
 				String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 				inputStream = file.getInputStream();
 				DBObject metaData = new BasicDBObject();
 				metaData.put("postId", post.getId());
-				metaData.put("userId", post.getUserId());
+				//metaData.put("userId", post.getUserId());
+				metaData.put("entityId", post.getEntityId());
 				GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, "image/png", metaData);
 				String fileId = gridFsFile.getId().toString();
 				List<String> relatedFiles  = new ArrayList<String>();

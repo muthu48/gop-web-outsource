@@ -25,7 +25,8 @@ import com.jpw.springboot.model.Connection;
 import com.jpw.springboot.model.User;
 import com.jpw.springboot.service.SocialService;
 import com.jpw.springboot.service.UserService;
-//import com.jpw.springboot.util.CustomErrorType;
+import com.jpw.springboot.util.CustomErrorType;
+import com.jpw.springboot.util.SystemConstants;
 
 @RestController
 @RequestMapping("/api")
@@ -64,7 +65,7 @@ public class SocialController {
 			@RequestParam (value = "targetEntityId", required = false) String targetEntityId) {
 		//logger.info("Fetching relation for userId {}", connection.getUserId());
 		//boolean isFollowing = socialService.isSourceEntityFollowingTargetEntity(sourceEntityId, targetEntityId);
-		String relationshipStatus = socialService.getRelationshipStatus(sourceEntityId, targetEntityId);
+		String relationshipStatus = socialService.getRelationshipStatus(sourceEntityId, targetEntityId, false);
 		return new ResponseEntity<String>(relationshipStatus, HttpStatus.OK);
 	}
 	
@@ -97,7 +98,18 @@ public class SocialController {
 		
 		return new ResponseEntity<List<User>>(followers, HttpStatus.OK);
 	}
-
+	
+	@RequestMapping(value = "/social/getConnectionsByStatus/{entityId}/", method = RequestMethod.GET)
+	public ResponseEntity<?> getConnectionsByStatus(@PathVariable (value = "entityId", required = true) String entityId,
+			@RequestParam (value = "status", required = false) String status) {
+		logger.info("Fetching getConnectionsByStatus  for entityId {}", entityId);
+		if(status == null){
+			status = SystemConstants.REQUESTED_CONNECTION;
+		}
+		List<Connection> connections = socialService.getConnections(entityId, status);
+		
+		return new ResponseEntity<List<Connection>>(connections, HttpStatus.OK);
+	}
 	
 	@RequestMapping(value = "/social/followDistrict", method = RequestMethod.POST)
 	public ResponseEntity<?> followDistrict(@RequestBody Connection connection) {
@@ -114,15 +126,37 @@ public class SocialController {
 	@RequestMapping(value = "/social/followPerson", method = RequestMethod.POST)
 	public ResponseEntity<?> followPerson(@RequestBody Connection connection) {
 		logger.info("Establishing connection between userId " + connection.getUserId() + ", connecting user " + connection.getConnectionUserId());
-		connection = socialService.follow(connection);
-/*		if (activites == null) {
-			logger.error("Activites with userId {} not found.", userId);
-			return new ResponseEntity(new CustomErrorType("Activites with id " + userId + " not found"),
-					HttpStatus.NOT_FOUND);
+		//Get the user data, set FOLLOWING by default in case of PASSIVE profile
+		User targetUser;
+		try {
+			targetUser = userService.getUser(connection.getTargetEntityId(), connection.getTargetEntityType());
+			if(targetUser.getStatus().equalsIgnoreCase(SystemConstants.PASSIVE_USER)){
+				connection.setStatus(SystemConstants.FOLLOWING_CONNECTION);
+			}
+
+		} catch (Exception e) {
+			logger.error("Error in retrieving USer " + connection.getTargetEntityId() + e.getMessage());
 		}
-*/		return new ResponseEntity<Connection>(connection, HttpStatus.OK);
+		connection = socialService.follow(connection);
+
+		return new ResponseEntity<Connection>(connection, HttpStatus.OK);
 	}	
 	
+	@RequestMapping(value = "/social/connectionAction", method = RequestMethod.POST)
+	public ResponseEntity<?> updateConnection(@RequestBody Connection connection) {
+		logger.info("Updating Connection information " + connection.getSourceEntityId() 
+		+ ", connected entity " + connection.getTargetEntityId()
+		+ ", status " + connection.getStatus());
+		try {
+			connection = socialService.connectionAction(connection);
+		} catch (Exception e) {
+			String errorMessage = "Connection not found";
+			logger.error(errorMessage, e);
+			return new ResponseEntity(new CustomErrorType(errorMessage), HttpStatus.NOT_FOUND);
+			
+		}
+ 		return new ResponseEntity<Connection>(connection, HttpStatus.OK);
+	}	
 	
 	@RequestMapping(value = "/social/{id}", method = RequestMethod.DELETE)
 	public ResponseEntity<?> unFollow(@PathVariable("id") String id) {
@@ -140,6 +174,7 @@ public class SocialController {
 		return new ResponseEntity<User>(HttpStatus.NO_CONTENT);
 	}
 
+	//OBSOLETE
 	@GetMapping
 	public String requestConnection(Model model) {
 		if (connectionRepository.findPrimaryConnection(Facebook.class) == null) {

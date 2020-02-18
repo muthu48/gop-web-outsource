@@ -16,6 +16,9 @@ public interface LegislatorCongressGTRepository extends MongoRepository<Legislat
 
 	@Query(value = "{ 'id.govtrack' : ?0 }", fields = "{ 'id.govtrack' : 0 }")
     List<LegislatorCongressGT> findByIdGovtrack(Integer govtrack);
-    
+	
+	@Query(value = "{ 'id.bioguide' : ?0 }", fields = "{ 'id.bioguide' : 0 }")
+    List<LegislatorCongressGT> findByIdBioguide(String bioguide);
+	
     List<LegislatorCongressGT> findById(BasicDBObject id);
 }

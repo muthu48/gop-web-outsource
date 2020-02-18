@@ -9,7 +9,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
 @Document(collection="legislatorcongress")
-public class LegislatorCongressGT {
+public class LegislatorCongressGT extends AbstractModel {
 	@Id	
 	private String entityId;
 	private BasicDBObject id;

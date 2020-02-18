@@ -16,6 +16,7 @@ public interface UserService {
 	User getUser(String name, String userType) throws Exception;
 	LegislatorOpenState findLegislator(String name);
 	public LegislatorCongressGT findLegislatorCongress(String name);
+	public LegislatorCongressGT findLegislatorCongressByBioguide(String name);
 	User createUser(User user);
 	
 	void saveUser(UserProfile user);
@@ -32,7 +33,7 @@ public interface UserService {
 	public ProfileData createProfileData(User user, String entityType, String profileTemplateId);
 	public ProfileData createProfileData(ProfileData profileData);
 	public ProfileData saveProfileData(ProfileData profileData);
-	public List<ProfileData> getProfileData(String entityId);
+	public List<ProfileData> getProfileDatas(String entityId);
 	public List<ProfileData> getProfileDataByProfileTemplateId(String entityId, String profileTemplateId);
 	public ProfileData updateUserProfileData(String entityId, String profileTemplateId, String key, String value);
 

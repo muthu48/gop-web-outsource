@@ -8,7 +8,7 @@ public interface PostService {
 
 	Post findById(String id);
 
-	Post findByName(String name);
+	//Post findByName(String name);
 
 	public Post createPost(Post post);
 
@@ -21,6 +21,6 @@ public interface PostService {
 	void deleteAllPosts();
 
 	List<Post> findAllPosts();
-
-	boolean isPostExist(Post post);
+	List<Post> findAllPosts(String entityId);
+	//boolean isPostExist(Post post);
 }

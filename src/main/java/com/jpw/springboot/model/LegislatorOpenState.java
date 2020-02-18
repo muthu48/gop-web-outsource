@@ -12,7 +12,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
 @Document(collection="legislatoropenstate")
-public class LegislatorOpenState {
+public class LegislatorOpenState extends AbstractModel {
 	@Id	
 	@Field("_id")
 	private String id;

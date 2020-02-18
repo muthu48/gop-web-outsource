@@ -22,6 +22,7 @@ public interface ProfileTemplateService {
 
 	List<ProfileTemplate> findAllProfileTemplates();
 	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId);
-
+	List<ProfileTemplate> findAllProfileTemplatesByIds(List<String> profileTemplateIds);
+	List<ProfileTemplate> findAllByType(String type);
 	boolean isProfileTemplateExist(ProfileTemplate profileTemplate);
 }

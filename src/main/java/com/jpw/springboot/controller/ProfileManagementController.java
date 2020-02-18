@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -21,6 +22,7 @@ import com.jpw.springboot.model.ProfileTemplate;
 import com.jpw.springboot.service.ProfileTemplateService;
 import com.jpw.springboot.service.UserService;
 //import com.jpw.springboot.util.CustomErrorType;
+import com.jpw.springboot.util.CustomErrorType;
 
 @RestController
 @RequestMapping("/profile")
@@ -35,32 +37,43 @@ public class ProfileManagementController {
 	UserService userService;
 	
 	@RequestMapping(value = "/template/getAllProfileTemplates", method = RequestMethod.GET)
-	public ResponseEntity<List<ProfileTemplate>> listAllProfileTemplates() {
-		List<ProfileTemplate> profiletemplate = profileTemplateService.findAllProfileTemplates();
-		if (profiletemplate.isEmpty()) {
-			return new ResponseEntity(HttpStatus.NO_CONTENT);
-		}
-		return new ResponseEntity<List<ProfileTemplate>>(profiletemplate, HttpStatus.OK);
-	}
-
-	@RequestMapping(value = "/template/getProfileTemplate/{profileTemplateId}", method = RequestMethod.GET)
-	public ResponseEntity<List<ProfileTemplate>> listProfileTemplate(@PathVariable("profileTemplateId") String profileTemplateId) {
-		List<ProfileTemplate> profiletemplates = profileTemplateService.findByProfileTemplateId(profileTemplateId);
+	public ResponseEntity<List<ProfileTemplate>> listAllProfileTemplates(@RequestParam (value = "userType", required = false) String userType) {
+		List<ProfileTemplate> profiletemplates = null;
+		if(userType != null)
+			profiletemplates = profileTemplateService.findAllByType(userType);
+		else	
+			profiletemplates = profileTemplateService.findAllProfileTemplates();
+		
+		
 		if (profiletemplates.isEmpty()) {
 			return new ResponseEntity(HttpStatus.NO_CONTENT);
 		}
 		return new ResponseEntity<List<ProfileTemplate>>(profiletemplates, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/template/getProfileTemplate/{profileTemplateId}", method = RequestMethod.GET)
+	public ResponseEntity<?> listProfileTemplate(@PathVariable("profileTemplateId") String profileTemplateId) {
+		List<ProfileTemplate> profiletemplates = profileTemplateService.findByProfileTemplateId(profileTemplateId);
+		ProfileTemplate profiletemplate = null;
+		if (profiletemplates.isEmpty()) {
+			logger.error("ProfileTemplate with name " + profileTemplateId + " not found");
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType("ProfileTemplate with name " + profileTemplateId + " not found"),
+					HttpStatus.NOT_FOUND);
+		}else{
+			profiletemplate = profiletemplates.get(0);
+		}
+		return new ResponseEntity<ProfileTemplate>(profiletemplate, HttpStatus.OK);
 	}	
 	
 	@RequestMapping(value = "/template/{id}", method = RequestMethod.GET)
 	public ResponseEntity<?> getProfileTemplate(@PathVariable("id") String id) {
 		logger.info("Fetching ProfileTemplate with id {}", id);
 		ProfileTemplate profiletemplate = profileTemplateService.findById(id);
-		/*if (profiletemplate == null) {
+		if (profiletemplate == null) {
 			logger.error("ProfileTemplate with id {} not found.", id);
-			return new ResponseEntity(new CustomErrorType("ProfileTemplate with id " + id + " not found"),
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType("ProfileTemplate with id " + id + " not found"),
 					HttpStatus.NOT_FOUND);
-		}*/
+		}
 		return new ResponseEntity<ProfileTemplate>(profiletemplate, HttpStatus.OK);
 	}
 	

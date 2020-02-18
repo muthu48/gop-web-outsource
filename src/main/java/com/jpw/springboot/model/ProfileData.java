@@ -13,7 +13,7 @@ import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
 //CONTAINS THE DATA FOR ANY ENTITY PROFILE TEMPLATE, 
 //PROFILE DATA CHANGE IS HANDLED BY THIS ENTITY 
-public class ProfileData implements Comparable<ProfileData>{
+public class ProfileData extends AbstractModel implements Comparable<ProfileData>{
 	@Id	
 	private String id; // not required	
 	private String profileTemplateId; //references profileTemplateId of ProfileTemplate
@@ -23,6 +23,9 @@ public class ProfileData implements Comparable<ProfileData>{
 	private String entityType;
 	private boolean current;
 	
+	public String getId() {
+		return id;
+	}
 	public String getProfileTemplateId() {
 		return profileTemplateId;
 	}

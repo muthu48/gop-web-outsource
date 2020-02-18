@@ -17,9 +17,17 @@ public interface SocialService {
 	
 	boolean isSourceEntityFollowingTargetEntity(String userId, String groupId);
 	
-	public String getRelationshipStatus(String userId, String groupId);
+	public String getRelationshipStatus(String userId, String groupId, boolean checkAndExit);
 	
 	int getFollowersCount(String entityId);
 	
 	List<User> getFollowers(String entityId);
+	
+	List<Connection> getConnections(String userId, String status);
+	
+	List<String> getConnectionsEntityId(String userId, String status);
+	
+	public Connection connectionAction(Connection connectionIP) throws Exception;
+	
+
 }

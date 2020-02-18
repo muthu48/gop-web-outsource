@@ -3,12 +3,15 @@ package com.jpw.springboot.controller;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.bson.BSONObject;
 import org.slf4j.Logger;
@@ -42,6 +45,7 @@ import com.jpw.springboot.model.User;
 import com.jpw.springboot.service.LegislatorDataProcessingService;
 //import com.jpw.springboot.model.UserProfile;
 import com.jpw.springboot.service.UserService;
+import com.jpw.springboot.util.SystemConstants;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -87,7 +91,7 @@ public class UserManagementController {
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 	*/
-	@RequestMapping(value = "/{userName}", method = RequestMethod.GET)
+	@RequestMapping(value = "/{userName}/", method = RequestMethod.GET)
 	public ResponseEntity<?> getUserByUserName(@PathVariable("userName") String userName) {
 		logger.info("Fetching User by userName " + userName);
 		ResponseEntity response = null;
@@ -370,13 +374,23 @@ public class UserManagementController {
 	 * */
 	@RequestMapping(value = "/legis/loadCongressLegislatorsToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadCongressLegislatorsToDb() {
-		logger.info("loadCongressLegislatorsToDb data/congress/congress-legislators-govtrack/legislators-current.json");
+		String filePath = "C:\\Users\\OPSKY\\Documents\\Project\\Data\\congress\\congress-legislators-govtrack\\legislators-current.json";
+		logger.info("loadCongressLegislatorsToDb " + filePath);
 
 		ResponseEntity response = null;
 		File file;
 		try {
-			file = new ClassPathResource("data/congress/congress-legislators-govtrack/legislators-current.json").getFile();
+			//file = new ClassPathResource("data/congress/congress-legislators-govtrack/legislators-current.json").getFile();
+			file = new File(filePath);
+		    Instant start = Instant.now();
+		    
 			legislatorDataProcessingService.loadCongressLegislatorsToDb(file);	
+		    
+			Instant finish = Instant.now();
+		    long timeElapsed = Duration.between(start, finish).toMillis();  //in millis
+	        long minutes = TimeUnit.MILLISECONDS.toMinutes(timeElapsed);
+	        System.out.format("%d Milliseconds = %d minutes\n", timeElapsed, minutes );
+			
 			response = new ResponseEntity("data loaded successfully", HttpStatus.OK);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -395,11 +409,13 @@ public class UserManagementController {
 	 * */
 	@RequestMapping(value = "/legis/loadStateLegislatorsToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadStateLegislatorsToDb() {
-		logger.info("loadStateLegislatorsToDb data/Openstates/pa/legislators");
-
+		String filePath = "C:\\Users\\OPSKY\\Documents\\Project\\Data\\Openstates";
+		//logger.info("loadStateLegislatorsToDb data/Openstates/pa/legislators");
+		logger.info("loadStateLegislatorsToDb " + filePath);
 		ResponseEntity response = null;
 		try {
-			legislatorDataProcessingService.loadStateLegislatorsToDb("data/Openstates/pa/legislators");	
+			//legislatorDataProcessingService.loadStateLegislatorsToDb("data/Openstates/pa/legislators");
+			legislatorDataProcessingService.loadStateLegislatorsToDb(filePath);
 			response = new ResponseEntity("data loaded successfully", HttpStatus.OK);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -415,6 +431,9 @@ public class UserManagementController {
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	public ResponseEntity<?> createUser(@RequestBody User user, UriComponentsBuilder ucBuilder) {
 		logger.info("Creating User : {}", user);
+		if(user.getUserType() == null){
+			user.setUserType(SystemConstants.PUBLIC_USERTYPE);
+		}
 
 /*		if (userService.isUserExist(user)) {
 			logger.error("Unable to create. A User with name {} already exist", user.getUserName());
@@ -425,7 +444,13 @@ public class UserManagementController {
 		user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
 		user = userService.createUser(user);
 		
-		userService.createProfileData(user, "publicUser", "upDefault");
+		//TODO
+		//should differentiate and the profile based on the usertype
+		if(user.getUserType().equalsIgnoreCase(SystemConstants.PUBLIC_USERTYPE)){
+			userService.createProfileData(user, SystemConstants.PUBLIC_USERTYPE, SystemConstants.PROFILE_TEMPLATE_BIODATA);
+		}else{
+			userService.createProfileData(user, SystemConstants.STATELEGIS_USERTYPE, SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL);
+		}
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(ucBuilder.path("/api/user/{id}").buildAndExpand(user.getUserId()).toUri());
@@ -520,8 +545,26 @@ public class UserManagementController {
 
 		return new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
 	}
+	
+	@RequestMapping(value = "/profileData/{userName}/", method = RequestMethod.GET)
+	public ResponseEntity<ProfileData> getUserProfileDataByUsername(
+			@PathVariable("userName") String userName) {
+		List<ProfileData> profileDatas = null;
 
-	@RequestMapping(value = "/profileData", method = RequestMethod.PUT)
+		ResponseEntity response = null;
+		try {
+			profileDatas = userService.getProfileDatas(userName);
+			response = new ResponseEntity(profileDatas, HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		
+		return response;
+	}
+	
+	@RequestMapping(value = "/profileData/update", method = RequestMethod.POST)
 	public ResponseEntity<?> updateProfileData(@RequestBody ProfileData profileData,
 			UriComponentsBuilder ucBuilder) {
 		logger.info("Creating user ProfileData : {}", profileData);

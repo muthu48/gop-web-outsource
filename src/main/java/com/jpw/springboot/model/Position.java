@@ -2,7 +2,7 @@ package com.jpw.springboot.model;
 
 import org.springframework.data.annotation.Id;
 
-public class Position {
+public class Position extends AbstractModel{
 	@Id	
 	private String id;		
 	private String positionName;

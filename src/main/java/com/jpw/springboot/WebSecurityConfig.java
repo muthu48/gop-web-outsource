@@ -52,8 +52,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	  .authorizeRequests()
       //Login url is handled through Angular routing
 	  .antMatchers(HttpMethod.POST, TokenAuthenticationService.SIGN_UP_URL).permitAll()
-	  .antMatchers("/user/legis/**", "/user/legisv1/**").permitAll()
-      .anyRequest().authenticated()
+	  //.antMatchers("/user/legis/**", "/post/downloadFile/user/**", "/user/legisv1/**", "/api/social/getFollowersCount/**").permitAll()
+	  //.antMatchers(HttpMethod.POST, TokenAuthenticationService.SIGN_UP_URL, "/user/legis/**", "/user/legis/biodata/**", "/user/legisv1/**").permitAll()
+	  .antMatchers("/user/**").permitAll()
+	  .antMatchers("/user/legis/**").permitAll()
+	  .antMatchers("/user/legisv1/**").permitAll()
+	  .antMatchers("/user/legis/biodata/**").permitAll()
+	  .antMatchers("/post/downloadFile/user/**").permitAll()
+	  .anyRequest().authenticated()
       .and()
       .addFilter(new JWTLoginFilter(authenticationManager()))
       .addFilter(new JWTAuthenticationFilter(authenticationManager()))
@@ -87,7 +93,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	            @Override
 	            public void addCorsMappings(CorsRegistry registry) {
 	                registry.addMapping("/**")
-	                .allowedOrigins("http://localhost:4200")
+	                .allowedOrigins(new String[]{"http://localhost:4200"})
 	                .allowedMethods("GET", "POST", "PUT", "DELETE","OPTIONS");
 	            }
 	            

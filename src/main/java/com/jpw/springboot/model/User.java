@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.data.annotation.Id;
 
-public class User {
+public class User extends AbstractModel {
 	@Id	
 	private String userId;
 	private String username; //email/phone

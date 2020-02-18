@@ -8,12 +8,13 @@ import com.mongodb.BasicDBObject;
 
 //PROFILE TEMPLATE DEFINITION, 
 //THIS CAN BE ASSOCIATED WITH ANY ENTITY AS PROFILEDATA
-public class ProfileTemplate {
+public class ProfileTemplate extends AbstractModel{
 	@Id	
 	private String id;	
 	private String profileTemplateId; // STATIC ID
-	private String type;
+	private String type; // LEGISLATOR / PUBLIC
 	private String name;//DISPLAY NAME
+	private String profileIcon; //UI ICON FOR THE PROFILE
 	private ArrayList<BasicDBObject> properties;
 	
 	public String getId() {
@@ -61,6 +62,14 @@ public class ProfileTemplate {
 	 */
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getProfileIcon() {
+		return profileIcon;
+	}
+
+	public void setProfileIcon(String profileIcon) {
+		this.profileIcon = profileIcon;
 	}
 
 	/**
