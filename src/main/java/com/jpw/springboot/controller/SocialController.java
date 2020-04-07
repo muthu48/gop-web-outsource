@@ -129,7 +129,7 @@ public class SocialController {
 		//Get the user data, set FOLLOWING by default in case of PASSIVE profile
 		User targetUser;
 		try {
-			targetUser = userService.getUser(connection.getTargetEntityId(), connection.getTargetEntityType());
+			targetUser = userService.getUser(connection.getTargetEntityId());
 			if(targetUser.getStatus().equalsIgnoreCase(SystemConstants.PASSIVE_USER)){
 				connection.setStatus(SystemConstants.FOLLOWING_CONNECTION);
 			}

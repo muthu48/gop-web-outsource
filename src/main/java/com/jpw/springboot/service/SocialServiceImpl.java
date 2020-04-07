@@ -112,7 +112,7 @@ public class SocialServiceImpl implements SocialService {
 			//then it can be considered AWAITING TO ACCEPT/REJECT 
 			if(!checkAndExit){ 
 				relationshipStatus = getRelationshipStatus(targetEntityId, sourceEntityId, true);
-				if(relationshipStatus.equalsIgnoreCase(SystemConstants.REQUESTED_CONNECTION)){
+				if(relationshipStatus != null && relationshipStatus.equalsIgnoreCase(SystemConstants.REQUESTED_CONNECTION)){
 					relationshipStatus = SystemConstants.AWAITING_CONNECTION;
 				}
 			}
@@ -133,6 +133,8 @@ public class SocialServiceImpl implements SocialService {
 		return connections;
 	}
 	
+	//Get Connections that follows this User
+	//Get Connections that this User follows
 	public List<String> getConnectionsEntityId(String userId, String status){
 		List<String> connectionsIdList = new ArrayList<String>();
 

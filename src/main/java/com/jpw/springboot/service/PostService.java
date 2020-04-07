@@ -23,4 +23,5 @@ public interface PostService {
 	List<Post> findAllPosts();
 	List<Post> findAllPosts(String entityId);
 	//boolean isPostExist(Post post);
+	List<Post> findMyPosts(String entityId);
 }

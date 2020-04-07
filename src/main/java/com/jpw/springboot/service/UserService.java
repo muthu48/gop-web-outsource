@@ -13,7 +13,7 @@ public interface UserService {
 	
 	User findById(String id);
 
-	User getUser(String name, String userType) throws Exception;
+	User getUser(String name) throws Exception;
 	LegislatorOpenState findLegislator(String name);
 	public LegislatorCongressGT findLegislatorCongress(String name);
 	public LegislatorCongressGT findLegislatorCongressByBioguide(String name);

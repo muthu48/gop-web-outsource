@@ -9,7 +9,7 @@ public class User extends AbstractModel {
 	private String userId;
 	private String username; //email/phone
 	private String password;
-	private String userType;//USER, LEGISLATOR, publicUser
+	private String userType;//USER, LEGISLATOR, PUBLICUSER
 	private String status = "active"; //active
 	private String sourceSystem; //GOVTRACK/OPENSTATE
 	private String sourceId;	
@@ -20,7 +20,7 @@ public class User extends AbstractModel {
 	private String emailId;
 	private String phone;
 	private String address;
-	
+	private String photoUrl;
 	
 	private Enum tagName;
 	private List<Connection> connections;
@@ -233,6 +233,14 @@ public class User extends AbstractModel {
 
 	public void setAddress(String address) {
 		this.address = address;
+	}
+
+	public String getPhotoUrl() {
+		return photoUrl;
+	}
+
+	public void setPhotoUrl(String photoUrl) {
+		this.photoUrl = photoUrl;
 	}
 
 }

@@ -1,5 +1,6 @@
 package com.jpw.springboot.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -23,6 +24,7 @@ import com.jpw.springboot.service.ProfileTemplateService;
 import com.jpw.springboot.service.UserService;
 //import com.jpw.springboot.util.CustomErrorType;
 import com.jpw.springboot.util.CustomErrorType;
+import com.jpw.springboot.util.SystemConstants;
 
 @RestController
 @RequestMapping("/profile")
@@ -39,8 +41,54 @@ public class ProfileManagementController {
 	@RequestMapping(value = "/template/getAllProfileTemplates", method = RequestMethod.GET)
 	public ResponseEntity<List<ProfileTemplate>> listAllProfileTemplates(@RequestParam (value = "userType", required = false) String userType) {
 		List<ProfileTemplate> profiletemplates = null;
-		if(userType != null)
+		if(userType != null){
 			profiletemplates = profileTemplateService.findAllByType(userType);
+			List<ProfileTemplate> profileTemplatesNoBio = new ArrayList<ProfileTemplate>(); 
+			//IGNORING BIODATA TEMPLATE DATA AS UI SHOWS BIODATA SEPARATELY 
+			for(ProfileTemplate profiletemplate:profiletemplates){
+				if(!(profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL))){
+					profileTemplatesNoBio.add(profiletemplate);
+				}
+			}
+			profiletemplates = profileTemplatesNoBio;
+		}
+		else	
+			profiletemplates = profileTemplateService.findAllProfileTemplates();
+		
+		
+		if (profiletemplates.isEmpty()) {
+			return new ResponseEntity(HttpStatus.NO_CONTENT);
+		}
+		return new ResponseEntity<List<ProfileTemplate>>(profiletemplates, HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/template/getAllProfileTemplates/{entityId}/", method = RequestMethod.GET)
+	public ResponseEntity<List<ProfileTemplate>> listEntityProfileTemplates(@PathVariable("entityId") String entityId, @RequestParam (value = "userType", required = false) String userType) {
+		List<ProfileTemplate> profiletemplates = null;
+		if(userType != null){
+			profiletemplates = profileTemplateService.findAllByType(userType);
+			
+			//get profiledata
+			List<ProfileData> profileDatas = userService.getProfileDatas(entityId);
+			
+			List<ProfileTemplate> profileTemplatesNoBio = new ArrayList<ProfileTemplate>(); 
+			//IGNORING BIODATA TEMPLATE DATA AS UI SHOWS BIODATA SEPARATELY 
+			for(ProfileTemplate profiletemplate:profiletemplates){
+				
+				boolean templateExist = false;
+				for(ProfileData profileData:profileDatas){
+					if(profileData.getProfileTemplateId().equalsIgnoreCase(profiletemplate.getProfileTemplateId())){
+						templateExist = true;
+						break;
+					}
+				}
+				
+				if(!templateExist && !(profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL))){
+					profileTemplatesNoBio.add(profiletemplate);
+				}
+			}
+			profiletemplates = profileTemplatesNoBio;
+		}
 		else	
 			profiletemplates = profileTemplateService.findAllProfileTemplates();
 		

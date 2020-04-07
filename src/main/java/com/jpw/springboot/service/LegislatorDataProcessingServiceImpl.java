@@ -79,9 +79,10 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 		    LegislatorCongressGT result = gson.fromJson(legislatorObj.toString(), LegislatorCongressGT.class);
 	    	legislatorCongressGTRepository.insert(result);
 	    	//String sourceId = result.getId().getString("govtrack");
-	    	String sourceId = result.getId().getString("bioguide");
-	    	//sourceId = sourceId.substring(0,sourceId.indexOf('.'));
-
+	    	String sourceId = result.getId().getString("bioguide"); //ex:A000370
+	    	String sourceIdIntial = sourceId.substring(0,1); //ex:A from A000370
+	    	String photoUrl = "http://bioguide.congress.gov/bioguide/photo/" + sourceIdIntial + "/" + sourceId + ".jpg";
+	    			
 	    	User user = new User();
 	    	user.setUserId(sourceId);
 	    	user.setUsername(sourceId);
@@ -90,6 +91,7 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 	    	user.setSourceId(sourceId);
 	    	user.setSourceSystem("GOVTRACK");
 	    	user.setStatus("PASSIVE");
+	    	user.setPhotoUrl(photoUrl);
 	    	userRepository.insert(user);
 	    	
 	    	//upCongressLegislatorExternal profileData
@@ -260,6 +262,7 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 	    	user.setSourceId(sourceId);
 	    	user.setSourceSystem("OPENSTATE");
 	    	user.setStatus("PASSIVE");
+	    	user.setPhotoUrl(result.getPhoto_url());
 	    	userRepository.insert(user);
 	    	
 	    	//upCongressLegislatorExternal profileData

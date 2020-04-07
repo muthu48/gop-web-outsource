@@ -73,7 +73,16 @@ public class PostManagementController {
 		}
 		return new ResponseEntity<List<Post>>(posts, HttpStatus.OK);
 	}
-
+	
+	@RequestMapping(value = "/getMyPosts/{entityId}/", method = RequestMethod.GET)
+	public ResponseEntity<List<Post>> listMyPostsByEntity(@PathVariable("entityId") String entityId) {
+		List<Post> posts = postService.findMyPosts(entityId);
+		if (posts.isEmpty()) {
+			return new ResponseEntity(HttpStatus.NO_CONTENT);
+		}
+		return new ResponseEntity<List<Post>>(posts, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public ResponseEntity<?> getPost(@PathVariable("id") String id) {
 		logger.info("Fetching Post with id {}", id);

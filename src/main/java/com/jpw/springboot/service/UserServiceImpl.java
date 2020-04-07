@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.core.userdetails.User;
@@ -101,10 +102,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return legislator;
 	}
 	
-	public User getUser(String username, String userType) throws Exception{
+	public User getUser(String username) throws Exception{
 		boolean createUserProfile = false;
 		List<String> profileTemplateIdsList = new ArrayList<String>();
-
+		String userType = null;
 		User user = findByUserName(username);
 				
 		if(user == null){
@@ -117,15 +118,24 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 				throw new Exception("User not found - " + username);
 			}
 		}else{
+			userType = user.getUserType();
 			//get profiledata
 			List<ProfileData> profileDatas = getProfileDatas(username);
-			user.setProfileDatas(profileDatas);
-			
+			List<ProfileData> profileDatasNoBio = new ArrayList<ProfileData>(); 
 			for(ProfileData profileData:profileDatas){
-				if(!profileTemplateIdsList.contains(profileData.getProfileTemplateId())){
-					profileTemplateIdsList.add(profileData.getProfileTemplateId());
+				
+				
+				//IGNORING BIODATA TEMPLATE DATA AS UI SHOWS BIODATA SEPARATELY 
+				if(!(profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL))){
+					profileDatasNoBio.add(profileData);
+					
+					if(!profileTemplateIdsList.contains(profileData.getProfileTemplateId())){
+						profileTemplateIdsList.add(profileData.getProfileTemplateId());
+					}
 				}
 			}
+			user.setProfileDatas(profileDatasNoBio);
+
 			//get profile
 			List<ProfileTemplate> profileTemplates = profileTemplateService.findAllProfileTemplatesByIds(profileTemplateIdsList);
 			user.setProfileTemplates(profileTemplates);
@@ -241,9 +251,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 	
 	public ProfileData saveProfileData(ProfileData profileData){
-		ProfileData profileDataDb = profileDataRepository.findOne(profileData.getId());
-		profileDataDb.setData(profileData.getData());
-		return profileDataRepository.save(profileDataDb);	
+		ProfileData profileDataDb = null;
+		if(StringUtils.isNoneEmpty(profileData.getId())){
+			profileDataDb = profileDataRepository.findOne(profileData.getId());
+			profileDataDb.setData(profileData.getData());
+			profileDataDb = profileDataRepository.save(profileDataDb);
+		}else{
+			profileDataDb = profileDataRepository.insert(profileData);
+		}
+		return profileDataDb;	
 	}
 	
 	public List<ProfileData> getProfileDatas(String entityId){
@@ -252,7 +268,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 	
 	public List<ProfileData> getProfileDataByProfileTemplateId(String entityId, String profileTemplateId){
-		List<ProfileData> profileDataList = profileDataRepository.findByEntityIdAndProfileTemplateId(entityId, profileTemplateId);
+		List<ProfileData> profileDataList = new ArrayList<ProfileData>();
+		profileDataList = profileDataRepository.findByEntityIdAndProfileTemplateId(entityId, profileTemplateId);
 		return profileDataList;		
 	}
 	

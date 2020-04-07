@@ -61,7 +61,12 @@ public class PostServiceImpl implements PostService {
 		return postRepository.findByEntityIdIn(connectionsIdList, sort); 
 	}
 	
-/*	public boolean isPostExist(Post post) {
+	public List<Post> findMyPosts(String entityId) {		
+		Sort sort = new Sort(Sort.Direction.DESC, "createdDate");
+		return postRepository.findByEntityId(entityId, sort); 
+	}	
+
+	/*	public boolean isPostExist(Post post) {
 		return findByName(post.getUserId()) != null;
 	}*/
 

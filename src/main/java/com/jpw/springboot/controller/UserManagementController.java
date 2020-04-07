@@ -97,7 +97,7 @@ public class UserManagementController {
 		ResponseEntity response = null;
 		User user = null;
 		try{
-			user = userService.getUser(userName, "publicUser");
+			user = userService.getUser(userName);
 			response = new ResponseEntity<User>(user, HttpStatus.OK);
 
 		}catch(Exception e){
@@ -114,7 +114,7 @@ public class UserManagementController {
 		ResponseEntity response = null;
 		User user = null;
 		try{
-			user = userService.getUser(userName, "legislator");
+			user = userService.getUser(userName);
 			response = new ResponseEntity<User>(user, HttpStatus.OK);
 
 		}catch(Exception e){
@@ -132,7 +132,7 @@ public class UserManagementController {
 		ResponseEntity response = null;
 		User user = null;
 		try{
-			user = userService.getUser(userName, "legislatorCongress");
+			user = userService.getUser(userName);
 			response = new ResponseEntity<User>(user, HttpStatus.OK);
 
 		}catch(Exception e){
@@ -276,24 +276,24 @@ public class UserManagementController {
 	}
 	
 	//USED
-	//Get Roles for Congress
-	@RequestMapping(value = "/legisv1/congress/roles/{userName}", method = RequestMethod.GET)
-	public ResponseEntity<ArrayList> getLegislatorRolesCongressV1(@PathVariable("userName") String userName) {
-		logger.info("Fetching Congress Legislator by userName " + userName);
+	//Get Roles
+	@RequestMapping(value = "/legis/roles/{userName}", method = RequestMethod.GET)
+	public ResponseEntity<ArrayList> getLegislatorRoles(@PathVariable("userName") String userName) {
+		logger.info("Fetching Roles for userName " + userName);
 
 		ResponseEntity response = null;
-		ArrayList arrRoles = null;
+		//ArrayList arrRoles = null;
 		try{
 			
-			ProfileData profileData = null;
-			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, "upRole");
+			//ProfileData profileData = null;
+			ArrayList<ProfileData> profileDatas = (ArrayList)userService.getProfileDataByProfileTemplateId(userName, "upRole");
 			if(profileDatas != null && profileDatas.size() > 0){
-				Collections.sort(profileDatas); //sort by desc order based on start date
-				arrRoles = new ArrayList<>();
+				//Collections.sort(profileDatas); //sort by desc order based on start date
+				/*arrRoles = new ArrayList<>();
 				for(ProfileData profile : profileDatas){
 					arrRoles.add(profile.getData());
-				}
-				response = new ResponseEntity<ArrayList>(arrRoles, HttpStatus.OK);
+				}*/
+				response = new ResponseEntity<ArrayList>(profileDatas, HttpStatus.OK);
 
 			}else{
 				response = new ResponseEntity("No Data found", HttpStatus.NOT_FOUND);
@@ -335,24 +335,24 @@ public class UserManagementController {
 
 	}
 	
-	//Get Roles for Congress
-	@RequestMapping(value = "/legisv1/congress/offices/{userName}", method = RequestMethod.GET)
-	public ResponseEntity<?> getLegislatorOfficesCongress(@PathVariable("userName") String userName) {
-		logger.info("Fetching Legislator Offices by userName " + userName);
+	//Get Offices for legislator
+	@RequestMapping(value = "/legis/offices/{userName}", method = RequestMethod.GET)
+	public ResponseEntity<?> getLegislatorOffices(@PathVariable("userName") String userName) {
+		logger.info("Fetching Offices for userName " + userName);
 
 		ResponseEntity response = null;
-		ArrayList arrOffices = null;
+		//ArrayList arrOffices = null;
 		try{
 			
 			ProfileData profileData = null;
-			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, "upOffices");
+			ArrayList<ProfileData> profileDatas = (ArrayList)userService.getProfileDataByProfileTemplateId(userName, "upOffices");
 			if(profileDatas != null && profileDatas.size() > 0){
-				Collections.sort(profileDatas); //sort by desc order based on start date
-				arrOffices = new ArrayList<>();
+				//Collections.sort(profileDatas); //sort by desc order based on start date
+				/*arrOffices = new ArrayList<>();
 				for(ProfileData profile : profileDatas){
 					arrOffices.add(profile.getData());
-				}
-				response = new ResponseEntity<ArrayList>(arrOffices, HttpStatus.OK);
+				}*/
+				response = new ResponseEntity<ArrayList>(profileDatas, HttpStatus.OK);
 
 			}else{
 				response = new ResponseEntity("No Data found", HttpStatus.NOT_FOUND);
