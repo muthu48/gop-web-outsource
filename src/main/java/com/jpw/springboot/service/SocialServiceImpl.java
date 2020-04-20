@@ -48,7 +48,7 @@ public class SocialServiceImpl implements SocialService {
 		
 	}
 
-	public Connection follow(Connection connection){
+	public Connection follow(Connection connection) throws Exception{
 /*		Calendar calendar = Calendar.getInstance();
 		Date now = calendar.getTime();
 		connection.setCreatedDate(now);*/
@@ -82,13 +82,13 @@ public class SocialServiceImpl implements SocialService {
 		
 	}
 	
-	public boolean isSourceEntityFollowingTargetEntity(String userId, String groupId){
+	public boolean isSourceEntityFollowingTargetEntity(String userId, String groupId) throws Exception{
 		boolean following = false;
 		Sort sort = new Sort(Sort.Direction.DESC, "createdDate");
 		List<Connection> connections = connectionEntityRepository.findBySourceEntityIdAndTargetEntityId(userId, groupId, sort);
 		if(!CollectionUtils.isEmpty(connections)){
 			Connection connection = connections.get(0);
-			if(connection != null && connection.getStatus() != null && "FOLLOWING".equalsIgnoreCase(connection.getStatus())){
+			if(connection != null && connection.getStatus() != null && SystemConstants.FOLLOWING_CONNECTION.equalsIgnoreCase(connection.getStatus())){
 				following = true;
 			}
 		}
@@ -96,7 +96,7 @@ public class SocialServiceImpl implements SocialService {
 		return following;
 	}
 
-	public String getRelationshipStatus(String sourceEntityId, String targetEntityId, boolean checkAndExit){
+	public String getRelationshipStatus(String sourceEntityId, String targetEntityId, boolean checkAndExit) throws Exception{
 		String relationshipStatus = null;
 		Sort sort = new Sort(Sort.Direction.DESC, "createdDate");
 		List<Connection> connections = connectionEntityRepository.findBySourceEntityIdAndTargetEntityId(sourceEntityId, targetEntityId, sort);
@@ -122,9 +122,10 @@ public class SocialServiceImpl implements SocialService {
 	}
 
 	//ENTITIES FROM BOTH DIRECTIONS HAVING THE RELATION 'FOLLOWING'
-	public List<Connection> getConnections(String userId, String status){
+	public List<Connection> getConnections(String userId, String status) throws Exception{
 		Sort sort = new Sort(Sort.Direction.DESC, "createdDate");
-		List<Connection> connections = connectionEntityRepository.findByTargetEntityIdAndStatus(userId, status, sort);
+		List<Connection> connections = new ArrayList<Connection>();
+		connections = connectionEntityRepository.findByTargetEntityIdAndStatus(userId, status, sort);
 		if(SystemConstants.FOLLOWING_CONNECTION.equalsIgnoreCase(status)){
 			List<Connection> sourceConnections = connectionEntityRepository.findBySourceEntityIdAndStatus(userId, status, sort);
 			connections.addAll(sourceConnections);
@@ -135,7 +136,7 @@ public class SocialServiceImpl implements SocialService {
 	
 	//Get Connections that follows this User
 	//Get Connections that this User follows
-	public List<String> getConnectionsEntityId(String userId, String status){
+	public List<String> getConnectionsEntityId(String userId, String status) throws Exception{
 		List<String> connectionsIdList = new ArrayList<String>();
 
 		List<Connection> sourceConnections = connectionEntityRepository.findByTargetEntityId(userId, status);
@@ -152,17 +153,36 @@ public class SocialServiceImpl implements SocialService {
 	}
 
 	@Override
-	public int getFollowersCount(String entityId) {
+	public int getFollowersCount(String entityId) throws Exception {		
+		int count = 0;
+		List<Connection> connections = getFollowersConnection(entityId);
+		if(connections != null && connections.size() > 0){
+			count = connections.size();
+		}
 		
-		return connectionEntityRepository.findByTargetEntityIdAndStatus(entityId, "FOLLOWING").size();
+		return count;
+
+	}
+	
+	//ENTITIES THAT FOLLOWS ME
+	public List<Connection> getFollowersConnection(String entityId) throws Exception{
+		Sort sort = new Sort(Sort.Direction.DESC, "createdDate");
+		List<Connection> connections = connectionEntityRepository.findByTargetEntityIdAndStatus(entityId, SystemConstants.FOLLOWING_CONNECTION, sort);
+		
+		return connections;
 	}
 
-	//ENTITIES THAT FOLLOWS ME
+	
 	@Override
-	public List<User> getFollowers(String entityId) {
-		
+	public List<User> getFollowers(String entityId) throws Exception {
+		List<Connection> connections = getFollowersConnection(entityId);
+		List<User> users = getConnectionEntities(connections);		
+		return users;
+	}
+
+	//get users of the connections, eventually should get other type of entities information
+	private List<User> getConnectionEntities(List<Connection> connections) throws Exception{
 		List<User> users = new ArrayList<User>();
-		List<Connection> connections = connectionEntityRepository.findByTargetEntityIdAndStatus(entityId, "FOLLOWING");
 		
 		for(Connection connection: connections) {
 			User user = userRepository.findByUsername(connection.getSourceEntityId());
@@ -175,15 +195,32 @@ public class SocialServiceImpl implements SocialService {
 		}
 		
 		return users;
+		
 	}
 	
-	public int getFollowingsCount(String entityId) {
-		return -1;
+	public int getFollowingsCount(String entityId) throws Exception {
+		int count = 0;
+		List<Connection> connections = getFollowingsConnection(entityId);
+		if(connections != null && connections.size() > 0){
+			count = connections.size();
+		}
+		
+		return count;
 	}	
 	
 	//ENTITIES I FOLLOW
-	public List<User> getFollowings(String entityId) {
-		return null;
+	public List<Connection> getFollowingsConnection(String entityId) throws Exception{
+		Sort sort = new Sort(Sort.Direction.DESC, "createdDate");
+		List<Connection> connections = connectionEntityRepository.findBySourceEntityIdAndStatus(entityId, SystemConstants.FOLLOWING_CONNECTION, sort);
+
+		
+		return connections;
+	}
+	
+	public List<User> getFollowings(String entityId) throws Exception{
+		List<Connection> connections = getFollowingsConnection(entityId);
+		List<User> users = getConnectionEntities(connections);		
+		return users;
 	}
 
 }

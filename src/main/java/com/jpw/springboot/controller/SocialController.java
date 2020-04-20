@@ -48,25 +48,30 @@ public class SocialController {
 		this.connectionRepository = connectionRepository;
 	}
 
-	@RequestMapping(value = "/social/getActivites/{userId}", method = RequestMethod.GET)
+	//OBSOLETE
+/*	@RequestMapping(value = "/social/getActivites/{userId}", method = RequestMethod.GET)
 	public ResponseEntity<?> getActivites(@PathVariable("userId") String userId) {
 		logger.info("Fetching Activites with userId {}", userId);
 		Activites activites = socialService.findByUserId(userId);
-/*		if (activites == null) {
-			logger.error("Activites with userId {} not found.", userId);
-			return new ResponseEntity(new CustomErrorType("Activites with id " + userId + " not found"),
-					HttpStatus.NOT_FOUND);
-		}
-*/		return new ResponseEntity<Activites>(activites, HttpStatus.OK);
-	}
 
+		return new ResponseEntity<Activites>(activites, HttpStatus.OK);
+	}
+*/
 	@RequestMapping(value = "/social/getRelation", method = RequestMethod.GET)
 	public ResponseEntity<?> getRelation(@RequestParam (value = "sourceEntityId", required = false) String sourceEntityId,
 			@RequestParam (value = "targetEntityId", required = false) String targetEntityId) {
-		//logger.info("Fetching relation for userId {}", connection.getUserId());
-		//boolean isFollowing = socialService.isSourceEntityFollowingTargetEntity(sourceEntityId, targetEntityId);
-		String relationshipStatus = socialService.getRelationshipStatus(sourceEntityId, targetEntityId, false);
-		return new ResponseEntity<String>(relationshipStatus, HttpStatus.OK);
+		logger.info("getRelation between " + sourceEntityId + ", " + targetEntityId);
+		ResponseEntity response = null;
+		try{
+
+			String relationshipStatus = socialService.getRelationshipStatus(sourceEntityId, targetEntityId, false);
+			response = new ResponseEntity<String>(relationshipStatus, HttpStatus.OK);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in getRelation between " + sourceEntityId + ", " + targetEntityId, HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in getRelation between " + sourceEntityId + ", " + targetEntityId, e);
+		}
+		
+		return response;
 	}
 	
 	/*
@@ -75,11 +80,17 @@ public class SocialController {
 	@RequestMapping(value = "/social/getFollowersCount", method = RequestMethod.GET)
 	public ResponseEntity<?> getFollowersCount(@RequestParam (value = "entityId", required = false) String entityId) {
 		logger.info("Fetching FollowersCount for entityId {}", entityId);
-		int followersCount = 0;
+		ResponseEntity response = null;
+		try{
+			int followersCount = socialService.getFollowersCount(entityId);
 		
-		followersCount = socialService.getFollowersCount(entityId);
+			response = new ResponseEntity<Integer>(followersCount, HttpStatus.OK);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in getFollowersCount for entityId " + entityId, HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in getFollowersCount for entityId " + entityId, e);
+		}
 		
-		return new ResponseEntity<Integer>(followersCount, HttpStatus.OK);
+		return response;
 	}
 	
 	/*
@@ -93,10 +104,57 @@ public class SocialController {
 	 * */
 	@RequestMapping(value = "/social/getFollowers", method = RequestMethod.GET)
 	public ResponseEntity<?> getFollowers(@RequestParam (value = "entityId", required = false) String entityId) {
-		logger.info("Fetching Followers  for entityId {}", entityId);
-		List<User> followers = socialService.getFollowers(entityId);
+		logger.info("getFollowers  for entityId ", entityId);
+		ResponseEntity response = null;
+		try{
+			List<User> followers = socialService.getFollowers(entityId);
 		
-		return new ResponseEntity<List<User>>(followers, HttpStatus.OK);
+			response = new ResponseEntity<List<User>>(followers, HttpStatus.OK);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in getFollowers  for entityId " + entityId, HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in getFollowers  for entityId " + entityId, e);
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Get the count of followings of an Entity
+	 * */
+	@RequestMapping(value = "/social/getFollowingsCount", method = RequestMethod.GET)
+	public ResponseEntity<?> getFollowingsCount(@RequestParam (value = "entityId", required = false) String entityId) {
+		logger.info("Fetching getFollowingsCount for entityId ", entityId);
+		ResponseEntity response = null;
+		try{
+			int followingsCount = socialService.getFollowingsCount(entityId);
+		
+			response = new ResponseEntity<Integer>(followingsCount, HttpStatus.OK);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in getFollowingsCount for entityId " + entityId, HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in getFollowingsCount for entityId " + entityId, e);
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Get the list of Followings of an Entity
+	 * Can get list of 20(configurable), in case of large data set
+	 * */
+	@RequestMapping(value = "/social/getFollowings", method = RequestMethod.GET)
+	public ResponseEntity<?> getFollowings(@RequestParam (value = "entityId", required = false) String entityId) {
+		logger.info("getFollowings  for entityId " + entityId);
+		ResponseEntity response = null;
+		try{
+			List<User> followings = socialService.getFollowings(entityId);
+		
+			response = new ResponseEntity<List<User>>(followings, HttpStatus.OK);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in getFollowings  for entityId " + entityId, HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in getFollowings  for entityId " + entityId, e);
+		}
+		
+		return response;
 	}
 	
 	@RequestMapping(value = "/social/getConnectionsByStatus/{entityId}/", method = RequestMethod.GET)
@@ -106,40 +164,60 @@ public class SocialController {
 		if(status == null){
 			status = SystemConstants.REQUESTED_CONNECTION;
 		}
-		List<Connection> connections = socialService.getConnections(entityId, status);
+		ResponseEntity response = null;
+		try{
+			List<Connection> connections = socialService.getConnections(entityId, status);
+			
+			response = new ResponseEntity<List<Connection>>(connections, HttpStatus.OK);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in getConnectionsByStatus for " + entityId, HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in getConnectionsByStatus for " + entityId, e);
+		}
 		
-		return new ResponseEntity<List<Connection>>(connections, HttpStatus.OK);
+		return response;
 	}
 	
 	@RequestMapping(value = "/social/followDistrict", method = RequestMethod.POST)
 	public ResponseEntity<?> followDistrict(@RequestBody Connection connection) {
-		logger.info("Establishing connection between userId " + connection.getUserId() + ", entityId " + connection.getGroupId());
+		logger.info("followDistrict between " + connection.getSourceEntityId() + ", " + connection.getTargetEntityId());
+		ResponseEntity response = null;
+		try{
 		connection = socialService.follow(connection);
-/*		if (activites == null) {
-			logger.error("Activites with userId {} not found.", userId);
-			return new ResponseEntity(new CustomErrorType("Activites with id " + userId + " not found"),
-					HttpStatus.NOT_FOUND);
+
+			response = new ResponseEntity<Connection>(connection, HttpStatus.OK);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in followDistrict between " + connection.getSourceEntityId() + ", " + connection.getTargetEntityId(), HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in followDistrict between " + connection.getSourceEntityId() + ", " + connection.getTargetEntityId(), e);
 		}
-*/		return new ResponseEntity<Connection>(connection, HttpStatus.OK);
+		
+		return response;
 	}	
 
 	@RequestMapping(value = "/social/followPerson", method = RequestMethod.POST)
 	public ResponseEntity<?> followPerson(@RequestBody Connection connection) {
-		logger.info("Establishing connection between userId " + connection.getUserId() + ", connecting user " + connection.getConnectionUserId());
+		logger.info("followPerson between " + connection.getSourceEntityId() + ", " + connection.getTargetEntityId());
+
 		//Get the user data, set FOLLOWING by default in case of PASSIVE profile
 		User targetUser;
+		ResponseEntity response = null;
 		try {
+			//TODO
+			//BASED ON ENTITY TYPE, SHOULD DECIDE USER OR OTHER ENTITY LIKE DISTRICT, PARTY
 			targetUser = userService.getUser(connection.getTargetEntityId());
 			if(targetUser.getStatus().equalsIgnoreCase(SystemConstants.PASSIVE_USER)){
 				connection.setStatus(SystemConstants.FOLLOWING_CONNECTION);
 			}
-
+			
+			connection = socialService.follow(connection);
+			
+			response = new ResponseEntity<Connection>(connection, HttpStatus.OK);
 		} catch (Exception e) {
-			logger.error("Error in retrieving USer " + connection.getTargetEntityId() + e.getMessage());
+			response = new ResponseEntity<String>("Error in followPerson between " + connection.getSourceEntityId() + ", " + connection.getTargetEntityId(), HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in followPerson between " + connection.getSourceEntityId() + ", " + connection.getTargetEntityId(), e);
 		}
-		connection = socialService.follow(connection);
 
-		return new ResponseEntity<Connection>(connection, HttpStatus.OK);
+
+		return response;
 	}	
 	
 	@RequestMapping(value = "/social/connectionAction", method = RequestMethod.POST)
