@@ -52,8 +52,16 @@ public class ProfileTemplateServiceImpl implements ProfileTemplateService {
 		return profileTemplateRepository.findByProfileTemplateId(profileTemplateId);
 	}
 	
+	public List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId, String type){
+		return profileTemplateRepository.findByProfileTemplateId(profileTemplateId, type);
+	}
+	
 	public List<ProfileTemplate> findAllProfileTemplatesByIds(List<String> profileTemplateIds) {
 		return profileTemplateRepository.findByProfileTemplateIdIn(profileTemplateIds);
+	}
+	
+	public List<ProfileTemplate> findAllProfileTemplatesByIds(List<String> profileTemplateIds, String type) {
+		return profileTemplateRepository.findByProfileTemplateIdInAndType(profileTemplateIds, type);
 	}
 	
 	public List<ProfileTemplate> findAllByType(String type) {

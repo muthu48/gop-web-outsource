@@ -3,6 +3,7 @@ package com.jpw.springboot.controller;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +47,7 @@ public class ProfileManagementController {
 			List<ProfileTemplate> profileTemplatesNoBio = new ArrayList<ProfileTemplate>(); 
 			//IGNORING BIODATA TEMPLATE DATA AS UI SHOWS BIODATA SEPARATELY 
 			for(ProfileTemplate profiletemplate:profiletemplates){
-				if(!(profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL))){
+				if(!(profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA))){
 					profileTemplatesNoBio.add(profiletemplate);
 				}
 			}
@@ -72,7 +73,7 @@ public class ProfileManagementController {
 			List<ProfileData> profileDatas = userService.getProfileDatas(entityId);
 			
 			List<ProfileTemplate> profileTemplatesNoBio = new ArrayList<ProfileTemplate>(); 
-			//IGNORING BIODATA TEMPLATE DATA AS UI SHOWS BIODATA SEPARATELY 
+			 
 			for(ProfileTemplate profiletemplate:profiletemplates){
 				
 				boolean templateExist = false;
@@ -83,7 +84,9 @@ public class ProfileManagementController {
 					}
 				}
 				
-				if(!templateExist && !(profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL))){
+				//IGNORING BIODATA TEMPLATE DATA for LEGISLATOR AS UI SHOWS BIODATA SEPARATELY	
+				if(!templateExist && !(userType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) && (profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA) ||
+						profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA)))){
 					profileTemplatesNoBio.add(profiletemplate);
 				}
 			}
@@ -100,9 +103,18 @@ public class ProfileManagementController {
 	}
 
 	@RequestMapping(value = "/template/getProfileTemplate/{profileTemplateId}", method = RequestMethod.GET)
-	public ResponseEntity<?> listProfileTemplate(@PathVariable("profileTemplateId") String profileTemplateId) {
-		List<ProfileTemplate> profiletemplates = profileTemplateService.findByProfileTemplateId(profileTemplateId);
+	public ResponseEntity<?> listProfileTemplate(@PathVariable("profileTemplateId") String profileTemplateId,
+			@RequestParam (value = "type", required = false) String type) {
+		List<ProfileTemplate> profiletemplates = null;
 		ProfileTemplate profiletemplate = null;
+		
+		if(StringUtils.isEmpty(type)){
+			profiletemplates = profileTemplateService.findByProfileTemplateId(profileTemplateId);						
+		}else{
+			profiletemplates = profileTemplateService.findByProfileTemplateId(profileTemplateId, type);						
+
+		}
+
 		if (profiletemplates.isEmpty()) {
 			logger.error("ProfileTemplate with name " + profileTemplateId + " not found");
 			return new ResponseEntity<CustomErrorType>(new CustomErrorType("ProfileTemplate with name " + profileTemplateId + " not found"),

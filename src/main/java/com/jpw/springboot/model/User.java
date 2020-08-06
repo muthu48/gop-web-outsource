@@ -1,26 +1,45 @@
 package com.jpw.springboot.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
+
+import com.mongodb.BasicDBObject;
 
 public class User extends AbstractModel {
 	@Id	
 	private String userId;
-	private String username; //email/phone
-	private String password;
-	private String userType;//USER, LEGISLATOR, PUBLICUSER
+	private String username; //email/phone/other alphanumeric
+	private String full_name;//Display name
+	private String password;//[applicable only for PUBLICUSER/LEGISLATOR]
+	private String userType;//SystemConstants - LEGISLATOR, PUBLICUSER, LEGISLATIVE_DISTRICT, POLITICAL_PARTY
+	//private String[] roles;//createprofile, deleteprofile, deleteprofiletemplate
 	private String status = "active"; //active
-	private String sourceSystem; //GOVTRACK/OPENSTATE
-	private String sourceId;	
-	
-	//shall be part of UserProfile - upCongressLegislatorDefault
+	private ArrayList<String> profileManagedBy;//admin ?
+	private ArrayList<String> members;//Members of this group
+	private ArrayList<String> circleUsers;
+	private ArrayList<BasicDBObject> circleUsersInfo;
+	private BasicDBObject settings;//{"accessRestriction":true, "blockedUsers":[]}
+	//accessRestriction true-PRIVATE, false-PUBLIC[DEFAULT]
+	private String modifiedBy;
+
+	//shall be part of UserProfile - upCongressLegislatorDefault / upDefault
 	private String firstName;
 	private String lastName;
 	private String emailId;
 	private String phone;
 	private String address;
+	
 	private String photoUrl;
+	private String profileAvatarImgFileId;//for profile image
+	private String profileBannerImgFileId;//for banner image
+	
+	//shall be part of UserProfile - upDefault
+	//shall be part of UserProfile - upCongressLegislatorDefault
+	private String sourceSystem; //GOVTRACK/OPENSTATE
+	private String sourceId;	
 	
 	private Enum tagName;
 	private List<Connection> connections;
@@ -34,7 +53,6 @@ public class User extends AbstractModel {
 	private List<ProfileData> profileDatas;		
 	//private LegislatorOpenState legislatorOpenState;	
 	
-
 	/**
 	 * @return the tagName
 	 */
@@ -130,6 +148,54 @@ public class User extends AbstractModel {
 	 */
 	public void setStatus(String status) {
 		this.status = status;
+	}
+
+	public String getFull_name() {
+		return full_name;
+	}
+
+	public void setFull_name(String full_name) {
+		this.full_name = full_name;
+	}
+
+	public ArrayList<String> getMembers() {
+		return members;
+	}
+
+	public void setMembers(ArrayList<String> members) {
+		this.members = members;
+	}
+
+	public ArrayList<String> getCircleUsers() {
+		return circleUsers;
+	}
+
+	public void setCircleUsers(ArrayList<String> circleUsers) {
+		this.circleUsers = circleUsers;
+	}
+
+	public ArrayList<BasicDBObject> getCircleUsersInfo() {
+		return circleUsersInfo;
+	}
+
+	public void setCircleUsersInfo(ArrayList<BasicDBObject> circleUsersInfo) {
+		this.circleUsersInfo = circleUsersInfo;
+	}
+
+	public BasicDBObject getSettings() {
+		return settings;
+	}
+
+	public void setSettings(BasicDBObject settings) {
+		this.settings = settings;
+	}
+
+	public String getModifiedBy() {
+		return modifiedBy;
+	}
+
+	public void setModifiedBy(String modifiedBy) {
+		this.modifiedBy = modifiedBy;
 	}
 
 	/**
@@ -241,6 +307,38 @@ public class User extends AbstractModel {
 
 	public void setPhotoUrl(String photoUrl) {
 		this.photoUrl = photoUrl;
+	}
+
+	public String getProfileAvatarImgFileId() {
+		return profileAvatarImgFileId;
+	}
+
+	public void setProfileAvatarImgFileId(String profileAvatarImgFileId) {
+		this.profileAvatarImgFileId = profileAvatarImgFileId;
+	}
+
+	public String getProfileBannerImgFileId() {
+		return profileBannerImgFileId;
+	}
+
+	public void setProfileBannerImgFileId(String profileBannerImgFileId) {
+		this.profileBannerImgFileId = profileBannerImgFileId;
+	}
+
+	public String getDisplayName() {
+		return full_name;
+	}
+
+	public void setDisplayName(String displayName) {
+		this.full_name = displayName;
+	}
+
+	public ArrayList<String> getProfileManagedBy() {
+		return profileManagedBy;
+	}
+
+	public void setProfileManagedBy(ArrayList<String> profileManagedBy) {
+		this.profileManagedBy = profileManagedBy;
 	}
 
 }

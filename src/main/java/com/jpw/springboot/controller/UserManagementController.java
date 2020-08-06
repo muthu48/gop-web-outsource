@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.bson.BSONObject;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -180,16 +181,19 @@ public class UserManagementController {
 	}
 
 	//USED
-	//Get Biodata for Legislator
-	@RequestMapping(value = "/legis/biodata/{userName}/", method = RequestMethod.GET)
-	public ResponseEntity<ProfileData> getLegislatorBiodata(@RequestHeader("userType") String userType, @PathVariable("userName") String userName) {
+	//Get Biodata
+	@RequestMapping(value = "/biodata/{userName}/", method = RequestMethod.GET)
+	public ResponseEntity<ProfileData> getLegislatorBiodata(@PathVariable("userName") String userName) {
 		logger.info("Fetching Legislator Biodata by userName " + userName);
 
 		ResponseEntity response = null;
+		ProfileData profileData = null;
 		try{
+			User user = userService.getUser(userName);
 			
-			ProfileData profileData = null;
-			String profileName = (userType.equalsIgnoreCase("internal") ? "upDefault" : "upCongressLegislatorExternal");
+
+			//String profileName = (userType.equalsIgnoreCase("internal") ? "upDefault" : "upCongressLegislatorExternal");
+			String profileName = (user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) ? "upCongressLegislatorExternal" : "upDefault");
 			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, profileName);
 			if(profileDatas != null && profileDatas.size() > 0){
 				profileData = profileDatas.get(0);
@@ -384,7 +388,37 @@ public class UserManagementController {
 			file = new File(filePath);
 		    Instant start = Instant.now();
 		    
-			legislatorDataProcessingService.loadCongressLegislatorsToDb(file);	
+			legislatorDataProcessingService.loadCongressLegislatorsToDb(file, SystemConstants.USERTYPE_CONGRESSLEGIS);	
+		    
+			Instant finish = Instant.now();
+		    long timeElapsed = Duration.between(start, finish).toMillis();  //in millis
+	        long minutes = TimeUnit.MILLISECONDS.toMinutes(timeElapsed);
+	        System.out.format("%d Milliseconds = %d minutes\n", timeElapsed, minutes );
+			
+			response = new ResponseEntity("data loaded successfully", HttpStatus.OK);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+
+	}
+	
+	@RequestMapping(value = "/legis/loadCongressExecutivesToDb", method = RequestMethod.POST)	
+	public ResponseEntity loadCongressExecutivesToDb() {
+		String filePath = "C:\\Users\\OPSKY\\Documents\\Project\\Data\\congress\\congress-legislators-govtrack\\executive.json";
+		logger.info("loadCongressExecutivesToDb " + filePath);
+
+		ResponseEntity response = null;
+		File file;
+		try {
+			//file = new ClassPathResource("data/congress/congress-legislators-govtrack/legislators-current.json").getFile();
+			file = new File(filePath);
+		    Instant start = Instant.now();
+		    
+			legislatorDataProcessingService.loadCongressLegislatorsToDb(file, SystemConstants.USERTYPE_EXECUTIVE);	
 		    
 			Instant finish = Instant.now();
 		    long timeElapsed = Duration.between(start, finish).toMillis();  //in millis
@@ -429,53 +463,55 @@ public class UserManagementController {
 	
 	//for Registering User
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	public ResponseEntity<?> createUser(@RequestBody User user, UriComponentsBuilder ucBuilder) {
+	public ResponseEntity<?> createUser(@RequestBody User user) {
 		logger.info("Creating User : {}", user);
+		ResponseEntity response = null;
+		try{
 		if(user.getUserType() == null){
-			user.setUserType(SystemConstants.PUBLIC_USERTYPE);
+			user.setUserType(SystemConstants.USERTYPE_PUBLIC);
 		}
 
-/*		if (userService.isUserExist(user)) {
-			logger.error("Unable to create. A User with name {} already exist", user.getUserName());
-			return new ResponseEntity<Object>(
-					new CustomErrorType("Unable to create. A User with name " + user.getUserName() + " already exist."),
-					HttpStatus.CONFLICT);
-		}*/
-		user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+		if(user.getStatus().equalsIgnoreCase(SystemConstants.ACTIVE) && (user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC) || user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS))){
+			user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+		}
+		
 		user = userService.createUser(user);
-		
-		//TODO
-		//should differentiate and the profile based on the usertype
-		if(user.getUserType().equalsIgnoreCase(SystemConstants.PUBLIC_USERTYPE)){
-			userService.createProfileData(user, SystemConstants.PUBLIC_USERTYPE, SystemConstants.PROFILE_TEMPLATE_BIODATA);
-		}else{
-			userService.createProfileData(user, SystemConstants.STATELEGIS_USERTYPE, SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL);
-		}
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(ucBuilder.path("/api/user/{id}").buildAndExpand(user.getUserId()).toUri());
-		return new ResponseEntity<User>(user, HttpStatus.CREATED);
-	}
-
-/*	@RequestMapping(value = "/addUserProfile", method = RequestMethod.POST)
-	public ResponseEntity<?> addUserProfile(@RequestBody UserProfile userProfile, UriComponentsBuilder ucBuilder) {
-		logger.info("Creating User : {}", userProfile);
-
-		if (userService.isUserExist(userProfile)) {
-			logger.error("Unable to create. A User with name {} already exist", userProfile.getUserId());
-			return new ResponseEntity<Object>(
-					new CustomErrorType(
-							"Unable to create. A User with name " + userProfile.getUserId() + " already exist."),
-					HttpStatus.CONFLICT);
+		response = new ResponseEntity<User>(user, HttpStatus.CREATED);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in createUser  for entityId " + user.getUsername(), HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in createUser  for entityId " + user.getUsername(), e);
 		}
 		
-		userService.saveUser(userProfile);
-
-		HttpHeaders headers = new HttpHeaders();
-		headers.setLocation(ucBuilder.path("/api/user/{id}").buildAndExpand(userProfile.getUserId()).toUri());
-		return new ResponseEntity<String>(headers, HttpStatus.CREATED);
+		return response;
 	}
-*/
+	
+	//for Creating other Profile
+	@RequestMapping(value = "/createprofile", method = RequestMethod.POST)
+	public ResponseEntity<User> createUserProfile(@RequestBody User user) {
+		logger.info("Creating User Profile: {}", user);
+		ResponseEntity response = null;
+		try{
+		if(user.getUserType() == null){
+			user.setUserType(SystemConstants.USERTYPE_PUBLIC);
+		}
+
+		if(user.getStatus().equalsIgnoreCase(SystemConstants.ACTIVE) && (user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC) || user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS))){
+			user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+		}
+		
+		user = userService.createUser(user);
+
+		response = new ResponseEntity<User>(user, HttpStatus.CREATED);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in createUserProfile  for entityId " + user.getUsername(), HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in createUserProfile  for entityId " + user.getUsername(), e);
+		}
+		
+		return response;
+	}
+	
+
 	@RequestMapping(value = "/{id}", method = RequestMethod.PUT)
 	public ResponseEntity<?> updateUser(@PathVariable("id") String id, @RequestBody User user) {
 		logger.info("Updating User with id {}", id);
@@ -573,7 +609,345 @@ public class UserManagementController {
 
 		return new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
 	}
+	
+	@RequestMapping(value = "/updateSettings", method = RequestMethod.POST)
+	public ResponseEntity<JSONObject> updateSettings(@RequestBody User user) {
+		logger.info("Updating user settings : ", user);
+		
+		User sysUser;
+		ResponseEntity response = null;
 
+		try {
+			sysUser = userService.getUser(user.getUsername());
+			
+			BasicDBObject jObj = user.getSettings();
+			if(jObj.containsField("accessRestriction")){
+				sysUser.getSettings().put("accessRestriction", jObj.getBoolean("accessRestriction"));
+			}else{
+				throw new Exception("Nothing to update");
+			}
+			
+			if(!StringUtils.isEmpty(user.getModifiedBy())){
+				sysUser.setModifiedBy(user.getModifiedBy());
+			}
+			
+			sysUser = userService.updateUser(sysUser);
+			response = new ResponseEntity(sysUser.getSettings(), HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/getSettings/{entityId}/", method = RequestMethod.GET)
+	public ResponseEntity<String> getSettings(@PathVariable("entityId") String entityId) {
+		User sysUser;
+		ResponseEntity response = null;
+		String settings = null;
+		
+		try {
+			logger.info("getSettings : " + entityId);
+
+			sysUser = userService.getUser(entityId);		
+			if(sysUser.getSettings() != null){
+				settings = sysUser.getSettings().toJson();
+			}
+
+			response = new ResponseEntity(settings, HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/addCircleUser", method = RequestMethod.POST)
+	public ResponseEntity<ArrayList<BasicDBObject>> addCircleUser(@RequestBody String jsonStr) {
+		
+		User sysUser, circleUser;
+		ResponseEntity response = null;
+		JSONObject jObj = null;
+		ArrayList<String> usernameList = new ArrayList<String>();
+
+		try {
+			jObj = new JSONObject(jsonStr);
+			logger.info("addCircleUser : " + jObj.getString("circlememberUsername") + " to " + jObj.getString("username"));
+
+			sysUser = userService.getUser(jObj.getString("username"));
+			circleUser = userService.getUser(jObj.getString("circlememberUsername"));
+			/*
+			if(sysUser.getCircleUsers() == null){
+				ArrayList<String> circleUsers = new ArrayList<String>(); 
+				sysUser.setCircleUsers(circleUsers);
+			}
+			sysUser.getCircleUsers().add(jObj.getString("circlememberUsername"));
+			*/
+			/*
+			[
+			    {"LEGISLATOR":["PAL000515", "2013104362"]}
+			]
+			*/
+			if(sysUser.getCircleUsersInfo() == null){
+				ArrayList<BasicDBObject> circleUsersInfo = new ArrayList<BasicDBObject>(); 
+
+				BasicDBObject circle = new BasicDBObject();
+				usernameList.add(jObj.getString("circlememberUsername"));
+				circle.append(circleUser.getUserType(), usernameList);
+				
+				circleUsersInfo.add(circle);
+				sysUser.setCircleUsersInfo(circleUsersInfo);
+
+			}else{
+				boolean categoryExist = false;
+				for(BasicDBObject circle:sysUser.getCircleUsersInfo()){
+					if(circle.containsKey(circleUser.getUserType())){
+						categoryExist = true;
+						usernameList = (ArrayList<String>)circle.get(circleUser.getUserType());
+						if(!usernameList.contains(jObj.getString("circlememberUsername"))){
+							usernameList.add(jObj.getString("circlememberUsername"));
+						}else{
+							throw new Exception("User already in Circle");
+						}
+						
+						break;
+					}
+				}
+				
+				if(!categoryExist){//adding new category
+					BasicDBObject circle = new BasicDBObject();
+					usernameList.add(jObj.getString("circlememberUsername"));
+					circle.append(circleUser.getUserType(), usernameList);
+					
+					sysUser.getCircleUsersInfo().add(circle);
+				}
+			}
+			///
+			sysUser.setModifiedBy(jObj.getString("modifiedBy"));
+
+			sysUser = userService.updateUser(sysUser);
+			response = new ResponseEntity(sysUser.getCircleUsersInfo(), HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/removeCircleUser", method = RequestMethod.POST)
+	public ResponseEntity<ArrayList<BasicDBObject>> removecircleuser(@RequestBody String jsonStr) {
+		
+		User sysUser, circleUser;
+		ResponseEntity response = null;
+		JSONObject jObj = null;
+		ArrayList<String> usernameList = new ArrayList<String>();
+
+		try {
+			jObj = new JSONObject(jsonStr);
+			logger.info("removeCircleUser : " + jObj.getString("circlememberUsername") + " from " + jObj.getString("username"));
+
+			sysUser = userService.getUser(jObj.getString("username"));
+			circleUser = userService.getUser(jObj.getString("circlememberUsername"));
+
+/*			if(sysUser.getCircleUsers() != null && sysUser.getCircleUsers().size() >0){
+				sysUser.getCircleUsers().remove(jObj.getString("circlememberUsername"));
+			}else{
+				throw new Exception("Nothing to remove");
+			}*/
+			if(sysUser.getCircleUsersInfo() != null){
+				boolean removed = false;
+
+				for(BasicDBObject circle:sysUser.getCircleUsersInfo()){
+					if(circle.containsKey(circleUser.getUserType())){
+						usernameList = (ArrayList<String>)circle.get(circleUser.getUserType());
+						usernameList.remove(jObj.getString("circlememberUsername"));
+						removed = true;
+						break;
+					}
+				}
+				
+				if(!removed){
+					throw new Exception("User not removed from Circle as not exist.");
+				}
+			}else{
+				throw new Exception("Nothing to remove");
+			}			
+			
+			
+			sysUser.setModifiedBy(jObj.getString("modifiedBy"));
+
+			sysUser = userService.updateUser(sysUser);
+			response = new ResponseEntity(sysUser.getCircleUsersInfo(), HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/getCircleUsers/{entityId}/", method = RequestMethod.GET)
+	//public ResponseEntity<ArrayList<String>> getCircleUsers(@PathVariable("entityId") String entityId) {
+	public ResponseEntity<ArrayList<BasicDBObject>> getCircleUsers(@PathVariable("entityId") String entityId) {
+
+		
+		User sysUser;
+		ResponseEntity response = null;
+		ArrayList<BasicDBObject> circleUsers = null;
+		
+		try {
+			logger.info("getCircleUsers : " + entityId);
+
+			sysUser = userService.getUser(entityId);		
+			circleUsers = sysUser.getCircleUsersInfo();
+
+			response = new ResponseEntity(circleUsers, HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/isInCircle/{profileId}/{entityId}/", method = RequestMethod.GET)
+	public ResponseEntity<Boolean> isInCircle(@PathVariable("profileId") String profileId, @PathVariable("entityId") String entityId) {
+		User sysUser;
+		ResponseEntity response = null;
+		boolean inCircle = false;
+
+		try {
+			logger.info("isInCircle : " + profileId + " , " + entityId);
+
+			sysUser = userService.getUser(entityId);		
+			if(sysUser.getCircleUsersInfo() != null){
+				for(BasicDBObject circle:sysUser.getCircleUsersInfo()){
+					Set<String> keys = circle.keySet();
+					for(String key:keys){
+						ArrayList<String> usernameList = (ArrayList<String>)circle.get(key);
+						inCircle = usernameList.contains(profileId);
+						if(inCircle){
+							break;
+						}
+					}
+	
+				}
+			}
+			response = new ResponseEntity(inCircle, HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/addMember", method = RequestMethod.POST)
+	public ResponseEntity<ArrayList<String>> addMember(@RequestBody String jsonStr) {
+		
+		User sysUser;
+		ResponseEntity response = null;
+		JSONObject jObj = null;
+
+		try {
+			jObj = new JSONObject(jsonStr);
+			logger.info("addMember : " + jObj.getString("memberUsername") + " to " + jObj.getString("username"));
+
+			sysUser = userService.getUser(jObj.getString("username"));
+			if(sysUser.getMembers() == null){
+				ArrayList<String> members = new ArrayList<String>(); 
+				sysUser.setMembers(members);
+			}
+			sysUser.getMembers().add(jObj.getString("memberUsername"));
+			sysUser.setModifiedBy(jObj.getString("modifiedBy"));
+
+			sysUser = userService.updateUser(sysUser);
+			response = new ResponseEntity(sysUser.getMembers(), HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/removeMember", method = RequestMethod.POST)
+	public ResponseEntity<ArrayList<String>> removeMember(@RequestBody String jsonStr) {
+		
+		User sysUser;
+		ResponseEntity response = null;
+		JSONObject jObj = null;
+
+		try {
+			jObj = new JSONObject(jsonStr);
+			logger.info("removeMember : " + jObj.getString("memberUsername") + " from " + jObj.getString("username"));
+
+			sysUser = userService.getUser(jObj.getString("username"));
+			if(sysUser.getMembers() != null && sysUser.getMembers().size() > 0){
+				sysUser.getMembers().remove(jObj.getString("memberUsername"));
+			}else{
+				throw new Exception("Nothing to remove");
+			}
+			sysUser.setModifiedBy(jObj.getString("modifiedBy"));
+
+			sysUser = userService.updateUser(sysUser);
+			response = new ResponseEntity(sysUser.getMembers(), HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+
+		return response;
+	}
+	
+	@RequestMapping(value = "/getManagedByUsers/{entityId}/", method = RequestMethod.GET)
+	public ResponseEntity<ArrayList<String>> getManagedByUsers(@PathVariable("entityId") String entityId) {
+		User sysUser;
+		ResponseEntity response = null;
+		ArrayList<String> managedByUsers = null;
+		
+		try {
+			logger.info("getCircleUsers : " + entityId);
+
+			sysUser = userService.getUser(entityId);		
+			managedByUsers = sysUser.getMembers();
+
+			response = new ResponseEntity(managedByUsers, HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+	}
+	
 	@RequestMapping(value = "/uploadUserSmProfileImage", method = RequestMethod.POST)
 	public ResponseEntity<?> uploadUserSmProfileImage(@ModelAttribute FormDataWithFile formDataWithFile,
 			UriComponentsBuilder ucBuilder) {
@@ -599,8 +973,8 @@ public class UserManagementController {
 				inputStream = file.getInputStream();
 				DBObject metaData = new BasicDBObject();
 				//metaData.put("postId", post.getId());
-				metaData.put("username", user.getUsername());
-				metaData.put("imageType", "USERSMPROFILEIMAGE");
+				metaData.put("entityId", user.getUsername());
+				metaData.put("imageType", SystemConstants.SMALL_PROFILE_IMAGE_METADATA);
 				//TODO
 				//MAKE FILE UPLOAD AS REUSABLE, CHANGE THE FILE TYPE
 				GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, "image/png", metaData);
@@ -613,8 +987,13 @@ public class UserManagementController {
 					profileDatas.add(profileData);
 					user.setProfileDatas(profileDatas);
 				}
-				//TODO
-				//update file id with user template data, also if possible capture the current session user
+
+				//not required, as gridfs has the entityId metadata
+				//update profile image reference
+				User userTemp = userService.findByUserName(user.getUsername());
+				userTemp.setProfileAvatarImgFileId(fileId);
+				userService.updateUser(userTemp);
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

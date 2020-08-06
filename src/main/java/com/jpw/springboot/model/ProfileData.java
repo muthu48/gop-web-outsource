@@ -18,7 +18,7 @@ public class ProfileData extends AbstractModel implements Comparable<ProfileData
 	private String id; // not required	
 	private String profileTemplateId; //references profileTemplateId of ProfileTemplate
 	private BasicDBObject data;
-	private BasicDBList dataList;
+	private BasicDBList dataList; // not required
 	private String entityId;
 	private String entityType;
 	private boolean current;

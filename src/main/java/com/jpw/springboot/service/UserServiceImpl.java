@@ -64,7 +64,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return user;
 	}
 
-	private User findByUserName(String name) {
+	public User findByUserName(String name) throws Exception {
 		User user = userRepository.findByUsername(name);
 
 		//CAN BE DONE THRU INTERCEPTOR
@@ -109,14 +109,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		User user = findByUserName(username);
 				
 		if(user == null){
-			if(!userType.equalsIgnoreCase(SystemConstants.PUBLIC_USERTYPE)){ //CREATE PROFILE FOR NON-PUBLIC USER AND KEEP IT INACTIVE
+			throw new Exception("User not found - " + username);
+
+	/*		if(!userType.equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC)){ //CREATE PROFILE FOR NON-PUBLIC USER AND KEEP IT INACTIVE
 				createUserProfile = true;
 				user = new User();
 				user.setUsername(username);
 				user.setStatus("PASSIVE");//CHANGED THE STATUS FROM INACTIVE TO PASSIVE
 			}else{
 				throw new Exception("User not found - " + username);
-			}
+			}*/
 		}else{
 			userType = user.getUserType();
 			//get profiledata
@@ -125,8 +127,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 			for(ProfileData profileData:profileDatas){
 				
 				
-				//IGNORING BIODATA TEMPLATE DATA AS UI SHOWS BIODATA SEPARATELY 
-				if(!(profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL))){
+				//IGNORING BIODATA TEMPLATE DATA for LEGISLATOR AS UI SHOWS BIODATA SEPARATELY 
+				//ProfileManagementController::listEntityProfileTemplates - Reference
+				if(!(userType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) && profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA))){
 					profileDatasNoBio.add(profileData);
 					
 					if(!profileTemplateIdsList.contains(profileData.getProfileTemplateId())){
@@ -137,12 +140,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 			user.setProfileDatas(profileDatasNoBio);
 
 			//get profile
-			List<ProfileTemplate> profileTemplates = profileTemplateService.findAllProfileTemplatesByIds(profileTemplateIdsList);
+			//List<ProfileTemplate> profileTemplates = profileTemplateService.findAllProfileTemplatesByIds(profileTemplateIdsList);
+			List<ProfileTemplate> profileTemplates = profileTemplateService.findAllProfileTemplatesByIds(profileTemplateIdsList, userType);
 			user.setProfileTemplates(profileTemplates);
 
 		}	
 		
-		if(userType != null && userType.equalsIgnoreCase(SystemConstants.STATELEGIS_USERTYPE)){
+		if(userType != null && userType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS)){
 			if(user.getSourceSystem() != null && user.getSourceSystem().equalsIgnoreCase(SystemConstants.OPENSTATE_LEGIS_SOURCE)){
 				LegislatorOpenState legislator = findLegislator(username);//find by legid which is set as username		
 				if(createUserProfile && legislator != null){
@@ -172,8 +176,23 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 	}
 
-	public User createUser(User user) {
-		return userRepository.insert(user);
+	public User createUser(User user) throws Exception{
+		User userLookup = userRepository.findByUsername(user.getUsername());
+		if(userLookup == null){
+			userRepository.insert(user);
+			
+			//createProfileData(user);
+			if(user.getProfileDatas() != null && user.getProfileDatas().size() > 0){
+				createBioData(user.getProfileDatas().get(0));
+			}
+			
+	       	return user;
+
+		}else{
+			throw new Exception("Entity with username " + user.getUsername() + " already exist");
+		}
+    	
+     	
 	}
 
 	public User updateUser(User user) {
@@ -192,7 +211,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return userRepository.findAll();
 	}
 
-	public boolean isUserExist(User user) {
+	public boolean isUserExist(User user) throws Exception{
 		return findByUserName(user.getUsername()) != null;
 	}
 
@@ -203,37 +222,52 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 
 	@Override
-	public boolean isUserExist(UserProfile user) {
+	public boolean isUserExist(UserProfile user) throws Exception{
 		return findByUserName(user.getUserId()) != null;
 	}
 	
-	public ProfileData createProfileData(User user, String entityType, String profileTemplateId){
+	//public ProfileData createProfileData(User user, String entityType, String profileTemplateId){
+	public ProfileData createProfileData(User user){
+		//TODO 
+		String profileTemplateId=null;
+		String entityType = user.getUserType();
 		//upDefault profileData
 		//how to deal if non-publicuser ?
 		//currently non-publicuser comes through bathc, however have to deal if its realtime
     	JSONObject profileDataObj = new JSONObject();
-    	profileDataObj.put("first_name", user.getFirstName());
-    	profileDataObj.put("last_name", user.getLastName());
     	profileDataObj.put("username", user.getUsername());
-    	profileDataObj.put("emailId", user.getEmailId());
-    	profileDataObj.put("phone", user.getPhone());
-    	profileDataObj.put("address", user.getAddress());
-
-    	//check for email/phone pattern with user.getUsername() and set corresponding value
-    	String emailRegex = "^(.+)@(.+)$";
-    	String phoneRegex = "^\\(?([0-9]{3})\\)?[-.\\s]?([0-9]{3})[-.\\s]?([0-9]{4})$"; //North America
-    	Pattern pattern = Pattern.compile(emailRegex);
-        Matcher matcher = pattern.matcher(user.getUsername());
-        if(matcher.matches()){
-        	profileDataObj.put("emailId", user.getUsername());        	
-        }else{
-        	pattern = Pattern.compile(phoneRegex);
-            matcher = pattern.matcher(user.getUsername());
-            if(matcher.matches()){
-            	profileDataObj.put("phone", user.getUsername());        	
-            }
-        }
-
+    	
+    	if(entityType.equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC) ||
+    			entityType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS)){
+    		profileTemplateId = SystemConstants.PROFILE_TEMPLATE_BIODATA;
+    		
+	    	profileDataObj.put("first_name", user.getFirstName());
+	    	profileDataObj.put("last_name", user.getLastName());
+	
+	    	profileDataObj.put("emailId", user.getEmailId());
+	    	profileDataObj.put("phone", user.getPhone());
+	    	profileDataObj.put("address", user.getAddress());
+	
+	    	//check for email/phone pattern with user.getUsername() and set corresponding value
+	    	String emailRegex = "^(.+)@(.+)$";
+	    	String phoneRegex = "^\\(?([0-9]{3})\\)?[-.\\s]?([0-9]{3})[-.\\s]?([0-9]{4})$"; //North America
+	    	Pattern pattern = Pattern.compile(emailRegex);
+	        Matcher matcher = pattern.matcher(user.getUsername());
+	        if(matcher.matches()){
+	        	profileDataObj.put("emailId", user.getUsername());        	
+	        }else{
+	        	pattern = Pattern.compile(phoneRegex);
+	            matcher = pattern.matcher(user.getUsername());
+	            if(matcher.matches()){
+	            	profileDataObj.put("phone", user.getUsername());        	
+	            }
+	        }
+    	}else if(entityType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGISLATIVE_DISTRICT)){
+    		
+    	}else if(entityType.equalsIgnoreCase(SystemConstants.USERTYPE_POLITICAL_PARTY)){
+    		
+    	}
+    	
     	ProfileData profileData = new ProfileData();
 	    Gson gson = new Gson();
     	BasicDBObject profileDataDBObj = gson.fromJson(profileDataObj.toString(), BasicDBObject.class);
@@ -241,8 +275,53 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     	profileData.setEntityType(entityType);
     	profileData.setProfileTemplateId(profileTemplateId);
     	profileData.setData(profileDataDBObj);
-    	profileDataRepository.insert(profileData);
     	
+    	saveProfileData(profileData);
+/*    	for(ProfileData profileData : user.getProfileDatas()){
+        	saveProfileData(profileData);
+
+    	}*/
+
+		return profileData;
+	}
+	
+	public ProfileData createBioData(ProfileData profileData){
+		//TODO 
+	    Gson gson = new Gson();
+		String entityType = profileData.getEntityType();
+
+		//DBObject profileDataObj = gson.fromJson(profileData.getData().toString(), DBObject.class);
+		BasicDBObject profileDataObj = profileData.getData();
+
+    	if(entityType.equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC) ||
+    			entityType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS)){
+
+	    	//check for email/phone pattern with user.getUsername() and set corresponding value
+	    	String emailRegex = "^(.+)@(.+)$";
+	    	String phoneRegex = "^\\(?([0-9]{3})\\)?[-.\\s]?([0-9]{3})[-.\\s]?([0-9]{4})$"; //North America
+	    	Pattern pattern = Pattern.compile(emailRegex);
+	        Matcher matcher = pattern.matcher(profileData.getEntityId());
+	        if(matcher.matches()){
+	        	profileDataObj.put("emailId", profileData.getEntityId());        	
+	        }else{
+	        	pattern = Pattern.compile(phoneRegex);
+	            matcher = pattern.matcher(profileData.getEntityId());
+	            if(matcher.matches()){
+	            	profileDataObj.put("phone", profileData.getEntityId());        	
+	            }
+	        }
+    	}
+    	/*else if(entityType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGISLATIVE_DISTRICT)){
+    		
+    	}else if(entityType.equalsIgnoreCase(SystemConstants.USERTYPE_POLITICAL_PARTY)){
+    		
+    	}*/
+    	
+    	//BasicDBObject profileDataDBObj = gson.fromJson(profileDataObj.toString(), BasicDBObject.class);
+    	//profileData.setData(profileDataDBObj);
+    	
+    	saveProfileData(profileData);
+
 		return profileData;
 	}
 	

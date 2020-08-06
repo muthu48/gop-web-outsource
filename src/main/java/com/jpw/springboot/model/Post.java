@@ -3,23 +3,26 @@ package com.jpw.springboot.model;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 
 public class Post extends AbstractModel{
 	@Id	
 	private String id;		
+    @Indexed
 	private String entityId; // userid, districtid, partyid mapped here
+    private boolean post;//true for Post, False for Comment
 	private String userId;// may not be required
 	private String districtId;// may not be required
-	private String parentPostId;	
+	private String parentPostId;//null, if Post.	
 	private String postCategory; //Health, Science, Auto, etc // may not be required
 	private String postType; //V-video / I-image / T -text, 
 	private String postText;
 	private String imageUrl;// may not be required
 	private String videoUrl;// may not be required
 	private String[] taggedEntityId;
-	private String[] likedByEntityIds;
+	private String[] likedBy;
 	private List<String> relatedFiles;
-	
+	private int commentLevel;//starts from 1
     
 	public String getId() {
 		return id;
@@ -143,12 +146,28 @@ public class Post extends AbstractModel{
 		this.taggedEntityId = taggedEntityId;
 	}
 
+	public String[] getLikedBy() {
+		return likedBy;
+	}
+
+	public void setLikedBy(String[] likedBy) {
+		this.likedBy = likedBy;
+	}
+
 	public String getEntityId() {
 		return entityId;
 	}
 
 	public void setEntityId(String entityId) {
 		this.entityId = entityId;
+	}
+
+	public boolean isPost() {
+		return post;
+	}
+
+	public void setPost(boolean post) {
+		this.post = post;
 	}
 
 	public String getPostCategory() {
@@ -159,4 +178,11 @@ public class Post extends AbstractModel{
 		this.postCategory = postCategory;
 	}
 
+	public int getCommentLevel() {
+		return commentLevel;
+	}
+
+	public void setCommentLevel(int commentLevel) {
+		this.commentLevel = commentLevel;
+	}
 }

@@ -136,15 +136,15 @@ public class SocialServiceImpl implements SocialService {
 	
 	//Get Connections that follows this User
 	//Get Connections that this User follows
-	public List<String> getConnectionsEntityId(String userId, String status) throws Exception{
+	public List<String> getConnectionsEntityId(String entityId, String status) throws Exception{
 		List<String> connectionsIdList = new ArrayList<String>();
-
-		List<Connection> sourceConnections = connectionEntityRepository.findByTargetEntityId(userId, status);
+		connectionsIdList.add(entityId);
+		List<Connection> sourceConnections = connectionEntityRepository.findByTargetEntityId(entityId, status);
 		for(Connection connection : sourceConnections){
 			connectionsIdList.add(connection.getSourceEntityId());
 		}
 		if(SystemConstants.FOLLOWING_CONNECTION.equalsIgnoreCase(status)){
-			List<Connection> targetConnections = connectionEntityRepository.findBySourceEntityId(userId, status);
+			List<Connection> targetConnections = connectionEntityRepository.findBySourceEntityId(entityId, status);
 			for(Connection connection : targetConnections){
 				connectionsIdList.add(connection.getTargetEntityId());
 			}
