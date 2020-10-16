@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -93,16 +94,32 @@ public class UserManagementController {
 	}
 	*/
 	@RequestMapping(value = "/{userName}/", method = RequestMethod.GET)
-	public ResponseEntity<?> getUserByUserName(@PathVariable("userName") String userName) {
+	public ResponseEntity<?> getUserByUserName(@PathVariable("userName") String userName,
+			@RequestParam (value = "requestorId", required = false) String requestorId) {
 		logger.info("Fetching User by userName " + userName);
 		ResponseEntity response = null;
 		User user = null;
 		try{
 			user = userService.getUser(userName);
+			
+			if(requestorId != null){
+				if(requestorId.equalsIgnoreCase(userName)){
+					user.setSelfProfile(true);
+					user.setShowSettings(true);
+
+				}
+				
+				if(user.getMembers() != null && user.getMembers().contains(requestorId)){
+					user.setShowSettings(true);
+					user.setProfileManaged(true);
+				}
+				
+			}
+			
 			response = new ResponseEntity<User>(user, HttpStatus.OK);
 
 		}catch(Exception e){
-			response = new ResponseEntity("User with username " + userName + " not found", HttpStatus.NOT_FOUND);
+			response = new ResponseEntity("User with username " + userName + " have issue " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 		return response;
@@ -192,8 +209,8 @@ public class UserManagementController {
 			User user = userService.getUser(userName);
 			
 
-			//String profileName = (userType.equalsIgnoreCase("internal") ? "upDefault" : "upCongressLegislatorExternal");
-			String profileName = (user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) ? "upCongressLegislatorExternal" : "upDefault");
+			String profileName = "upDefault";
+			//String profileName = (user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) ? "upCongressLegislatorExternal" : "upDefault");
 			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, profileName);
 			if(profileDatas != null && profileDatas.size() > 0){
 				profileData = profileDatas.get(0);
@@ -621,12 +638,12 @@ public class UserManagementController {
 			sysUser = userService.getUser(user.getUsername());
 			
 			BasicDBObject jObj = user.getSettings();
-			if(jObj.containsField("accessRestriction")){
-				sysUser.getSettings().put("accessRestriction", jObj.getBoolean("accessRestriction"));
-			}else{
-				throw new Exception("Nothing to update");
-			}
 			
+			if(sysUser.getSettings() == null){
+				sysUser.setSettings(new BasicDBObject());
+			}
+			sysUser.getSettings().put("accessRestriction", jObj.getBoolean("accessRestriction"));
+		
 			if(!StringUtils.isEmpty(user.getModifiedBy())){
 				sysUser.setModifiedBy(user.getModifiedBy());
 			}
@@ -846,6 +863,9 @@ public class UserManagementController {
 							break;
 						}
 					}
+					if(inCircle){
+						break;
+					}
 	
 				}
 			}
@@ -875,9 +895,15 @@ public class UserManagementController {
 			sysUser = userService.getUser(jObj.getString("username"));
 			if(sysUser.getMembers() == null){
 				ArrayList<String> members = new ArrayList<String>(); 
+				members.add(jObj.getString("memberUsername"));
 				sysUser.setMembers(members);
+			}else{
+				if(sysUser.getMembers().contains(jObj.getString("memberUsername"))){
+					throw new Exception(jObj.getString("memberUsername") + " already a Member");
+				}
+				
+				sysUser.getMembers().add(jObj.getString("memberUsername"));
 			}
-			sysUser.getMembers().add(jObj.getString("memberUsername"));
 			sysUser.setModifiedBy(jObj.getString("modifiedBy"));
 
 			sysUser = userService.updateUser(sysUser);
@@ -1012,4 +1038,30 @@ public class UserManagementController {
 
 	//request to get the uploaded image file
 	//refer postcontroller
+
+	@RequestMapping(value = "/isProfileEditable/{profileId}/{entityId}/", method = RequestMethod.GET)
+	public ResponseEntity<Boolean> isProfileEditable(@PathVariable("profileId") String profileId, @PathVariable("entityId") String entityId) {
+		User sysUser;
+		ResponseEntity response = null;
+		boolean profileEditable = false;
+
+		try {
+			logger.info("isProfileEditable: profile-> " + profileId + " , " + entityId);
+
+			sysUser = userService.getUser(profileId);		
+			if(sysUser.getMembers() != null  && sysUser.getMembers().contains(entityId)){
+				profileEditable = true;
+			}
+			response = new ResponseEntity(profileEditable, HttpStatus.OK);
+
+			
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+
+		return response;
+	}
+	
 }

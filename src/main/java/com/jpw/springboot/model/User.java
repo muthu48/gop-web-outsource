@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 
 import com.mongodb.BasicDBObject;
 
@@ -17,14 +18,20 @@ public class User extends AbstractModel {
 	private String userType;//SystemConstants - LEGISLATOR, PUBLICUSER, LEGISLATIVE_DISTRICT, POLITICAL_PARTY
 	//private String[] roles;//createprofile, deleteprofile, deleteprofiletemplate
 	private String status = "active"; //active
-	private ArrayList<String> profileManagedBy;//admin ?
+	private ArrayList<String> profileManagedBy;//NOT USED
 	private ArrayList<String> members;//Members of this group
 	private ArrayList<String> circleUsers;
 	private ArrayList<BasicDBObject> circleUsersInfo;
 	private BasicDBObject settings;//{"accessRestriction":true, "blockedUsers":[]}
 	//accessRestriction true-PRIVATE, false-PUBLIC[DEFAULT]
 	private String modifiedBy;
-
+	@Transient
+	private boolean isShowSettings = false;
+	@Transient
+	private boolean isSelfProfile = false;
+	@Transient
+	private boolean isProfileManaged = false;
+	
 	//shall be part of UserProfile - upCongressLegislatorDefault / upDefault
 	private String firstName;
 	private String lastName;
@@ -196,6 +203,30 @@ public class User extends AbstractModel {
 
 	public void setModifiedBy(String modifiedBy) {
 		this.modifiedBy = modifiedBy;
+	}
+
+	public boolean isShowSettings() {
+		return isShowSettings;
+	}
+
+	public void setShowSettings(boolean isShowSettings) {
+		this.isShowSettings = isShowSettings;
+	}
+
+	public boolean isSelfProfile() {
+		return isSelfProfile;
+	}
+
+	public void setSelfProfile(boolean isSelfProfile) {
+		this.isSelfProfile = isSelfProfile;
+	}
+
+	public boolean isProfileManaged() {
+		return isProfileManaged;
+	}
+
+	public void setProfileManaged(boolean isProfileManaged) {
+		this.isProfileManaged = isProfileManaged;
 	}
 
 	/**

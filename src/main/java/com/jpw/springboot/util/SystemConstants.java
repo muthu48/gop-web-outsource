@@ -15,11 +15,12 @@ public class SystemConstants {
 	public final static String GOVTRACK_LEGIS_SOURCE = "GOVTRACK";
 	
 	//CONNECTION STATUS
+	public final static String AWAITING_CONNECTION = "AWAITING";
 	public final static String REQUESTED_CONNECTION = "REQUESTED";
+	public final static String ACCEPTED_CONNECTION = "ACCEPTED";
 	public final static String FOLLOWING_CONNECTION = "FOLLOWING";
 	public final static String REJECTED_CONNECTION = "REJECTED";
-	public final static String ACCEPTED_CONNECTION = "ACCEPTED";
-	public final static String AWAITING_CONNECTION = "AWAITING";
+	public final static String CANCELLED_CONNECTION = "CANCELLED";
 	
 	//USER PROFILE STATUS
 	public final static String PASSIVE_USER = "PASSIVE";

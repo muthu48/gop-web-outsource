@@ -103,7 +103,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 	
 	public User getUser(String username) throws Exception{
-		boolean createUserProfile = false;
 		List<String> profileTemplateIdsList = new ArrayList<String>();
 		String userType = null;
 		User user = findByUserName(username);
@@ -111,66 +110,43 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		if(user == null){
 			throw new Exception("User not found - " + username);
 
-	/*		if(!userType.equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC)){ //CREATE PROFILE FOR NON-PUBLIC USER AND KEEP IT INACTIVE
-				createUserProfile = true;
-				user = new User();
-				user.setUsername(username);
-				user.setStatus("PASSIVE");//CHANGED THE STATUS FROM INACTIVE TO PASSIVE
-			}else{
-				throw new Exception("User not found - " + username);
-			}*/
 		}else{
 			userType = user.getUserType();
 			//get profiledata
 			List<ProfileData> profileDatas = getProfileDatas(username);
-			List<ProfileData> profileDatasNoBio = new ArrayList<ProfileData>(); 
+			//List<ProfileData> profileDatasNoBio = new ArrayList<ProfileData>(); 
 			for(ProfileData profileData:profileDatas){
 				
 				
 				//IGNORING BIODATA TEMPLATE DATA for LEGISLATOR AS UI SHOWS BIODATA SEPARATELY 
 				//ProfileManagementController::listEntityProfileTemplates - Reference
-				if(!(userType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) && profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA))){
+				/*if(!(userType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) && profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA))){
 					profileDatasNoBio.add(profileData);
 					
 					if(!profileTemplateIdsList.contains(profileData.getProfileTemplateId())){
 						profileTemplateIdsList.add(profileData.getProfileTemplateId());
 					}
+				}*/
+				if(!profileTemplateIdsList.contains(profileData.getProfileTemplateId())){
+					profileTemplateIdsList.add(profileData.getProfileTemplateId());
 				}
-			}
-			user.setProfileDatas(profileDatasNoBio);
 
+			}
+			//user.setProfileDatas(profileDatasNoBio);
+			user.setProfileDatas(profileDatas);
+			
 			//get profile
-			//List<ProfileTemplate> profileTemplates = profileTemplateService.findAllProfileTemplatesByIds(profileTemplateIdsList);
+			if(userType != null && (userType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) ||
+					userType.equalsIgnoreCase(SystemConstants.USERTYPE_CONGRESSLEGIS) ||
+					userType.equalsIgnoreCase(SystemConstants.USERTYPE_EXECUTIVE))){
+				userType = SystemConstants.USERTYPE_LEGIS;
+			}	
 			List<ProfileTemplate> profileTemplates = profileTemplateService.findAllProfileTemplatesByIds(profileTemplateIdsList, userType);
 			user.setProfileTemplates(profileTemplates);
 
 		}	
 		
-		if(userType != null && userType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS)){
-			if(user.getSourceSystem() != null && user.getSourceSystem().equalsIgnoreCase(SystemConstants.OPENSTATE_LEGIS_SOURCE)){
-				LegislatorOpenState legislator = findLegislator(username);//find by legid which is set as username		
-				if(createUserProfile && legislator != null){
-					user.setSourceId(legislator.getLegId());
-				}
-			}			
-			if(user.getSourceSystem() != null && user.getSourceSystem().equalsIgnoreCase(SystemConstants.GOVTRACK_LEGIS_SOURCE)){
-				//if(userType != null && userType.equalsIgnoreCase(SystemConstants.CONGRESSLEGIS_USERTYPE)){
-					LegislatorCongressGT legislatorCongressGT = findLegislatorCongressByBioguide(username);//by id.bioguide		
-					if(createUserProfile && legislatorCongressGT != null){
-						//user.setSourceId(legislator.getId());
-					}
-				//}
-			}	
-		}
-		/*
-		 if user does not exist, then mark the profile as inactive.
-		 Also shall create an user with inactive profile.
-		 Transform LegislatorOpenState data into User data, during data import ?? 
-		 */				
-		if(createUserProfile){
-			//@Async user creation
-			user = createUser(user);
-		}
+	
 		
 		return user;
 

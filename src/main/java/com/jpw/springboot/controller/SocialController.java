@@ -1,5 +1,6 @@
 package com.jpw.springboot.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -78,7 +79,7 @@ public class SocialController {
 	 * Get the count of followers for the given Entity - User, Group, Party
 	 * */
 	@RequestMapping(value = "/social/getFollowersCount", method = RequestMethod.GET)
-	public ResponseEntity<?> getFollowersCount(@RequestParam (value = "entityId", required = false) String entityId) {
+	public ResponseEntity<?> getFollowersCount(@RequestParam (value = "entityId", required = true) String entityId) {
 		logger.info("Fetching FollowersCount for entityId {}", entityId);
 		ResponseEntity response = null;
 		try{
@@ -103,7 +104,7 @@ public class SocialController {
 		Based on sourceEntityId, get basic entity data such as name
 	 * */
 	@RequestMapping(value = "/social/getFollowers", method = RequestMethod.GET)
-	public ResponseEntity<?> getFollowers(@RequestParam (value = "entityId", required = false) String entityId) {
+	public ResponseEntity<?> getFollowers(@RequestParam (value = "entityId", required = true) String entityId) {
 		logger.info("getFollowers  for entityId ", entityId);
 		ResponseEntity response = null;
 		try{
@@ -122,7 +123,7 @@ public class SocialController {
 	 * Get the count of followings of an Entity
 	 * */
 	@RequestMapping(value = "/social/getFollowingsCount", method = RequestMethod.GET)
-	public ResponseEntity<?> getFollowingsCount(@RequestParam (value = "entityId", required = false) String entityId) {
+	public ResponseEntity<?> getFollowingsCount(@RequestParam (value = "entityId", required = true) String entityId) {
 		logger.info("Fetching getFollowingsCount for entityId ", entityId);
 		ResponseEntity response = null;
 		try{
@@ -142,7 +143,7 @@ public class SocialController {
 	 * Can get list of 20(configurable), in case of large data set
 	 * */
 	@RequestMapping(value = "/social/getFollowings", method = RequestMethod.GET)
-	public ResponseEntity<?> getFollowings(@RequestParam (value = "entityId", required = false) String entityId) {
+	public ResponseEntity<?> getFollowings(@RequestParam (value = "entityId", required = true) String entityId) {
 		logger.info("getFollowings  for entityId " + entityId);
 		ResponseEntity response = null;
 		try{
@@ -176,7 +177,38 @@ public class SocialController {
 		
 		return response;
 	}
-	
+
+	@RequestMapping(value = "/social/getConnectionsEntityId/{entityId}/", method = RequestMethod.GET)
+	public ResponseEntity<List<String>> getConnectionsEntityId(@PathVariable (value = "entityId", required = true) String entityId,
+			@RequestParam (value = "action", required = false) String action) {
+		logger.info("Fetching getConnectionsEntityId  for entityId {}", entityId);
+
+		String status = "AWAITING";
+		ResponseEntity response = null;
+		List<String> usersList = null;
+		try{
+		  if(action.equalsIgnoreCase("approvalPending")){
+	        status = "AWAITING";
+	      }else if(action.equalsIgnoreCase("requestSent")){
+	        status = "REQUESTED";
+	      }else if(action.equalsIgnoreCase("followers")){
+	        status = SystemConstants.ACCEPTED_CONNECTION;
+	      }else if(action.equalsIgnoreCase("followings")){
+	        status = SystemConstants.FOLLOWING_CONNECTION;
+	      }
+		    
+		  usersList = socialService.getConnectionsEntityId(entityId, status);
+
+		  response = new ResponseEntity<List<String>>(usersList, HttpStatus.OK);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in getConnectionsEntityId for " + entityId, HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in getConnectionsEntityId for " + entityId, e);
+		}
+		
+		return response;
+	}
+
+	//OBSOLETE, USE followPerson INSTEAD
 	@RequestMapping(value = "/social/followDistrict", method = RequestMethod.POST)
 	public ResponseEntity<?> followDistrict(@RequestBody Connection connection) {
 		logger.info("followDistrict between " + connection.getSourceEntityId() + ", " + connection.getTargetEntityId());

@@ -138,7 +138,30 @@ public class SocialServiceImpl implements SocialService {
 	//Get Connections that this User follows
 	public List<String> getConnectionsEntityId(String entityId, String status) throws Exception{
 		List<String> connectionsIdList = new ArrayList<String>();
-		connectionsIdList.add(entityId);
+		List<Connection> connections = null;
+		if(SystemConstants.AWAITING_CONNECTION.equalsIgnoreCase(status)){//APPROVAL PENDING
+			connections = connectionEntityRepository.findByTargetEntityId(entityId, SystemConstants.REQUESTED_CONNECTION);
+			for(Connection connection : connections){
+				connectionsIdList.add(connection.getSourceEntityId());
+			}
+		}else if(SystemConstants.REQUESTED_CONNECTION.equalsIgnoreCase(status)){//REQUEST SENT
+			connections = connectionEntityRepository.findBySourceEntityId(entityId, SystemConstants.REQUESTED_CONNECTION);
+			for(Connection connection : connections){
+				connectionsIdList.add(connection.getTargetEntityId());
+			}
+		}else if(SystemConstants.ACCEPTED_CONNECTION.equalsIgnoreCase(status)){//FOLLOWERS 
+			connections = connectionEntityRepository.findByTargetEntityId(entityId, SystemConstants.FOLLOWING_CONNECTION);
+			for(Connection connection : connections){
+				connectionsIdList.add(connection.getSourceEntityId());
+			}
+		}else if(SystemConstants.FOLLOWING_CONNECTION.equalsIgnoreCase(status)){//FOLLOWINGS 
+			connections = connectionEntityRepository.findBySourceEntityId(entityId, SystemConstants.FOLLOWING_CONNECTION);
+			for(Connection connection : connections){
+				connectionsIdList.add(connection.getTargetEntityId());
+			}
+		}
+		
+/*		connectionsIdList.add(entityId);
 		List<Connection> sourceConnections = connectionEntityRepository.findByTargetEntityId(entityId, status);
 		for(Connection connection : sourceConnections){
 			connectionsIdList.add(connection.getSourceEntityId());
@@ -148,7 +171,7 @@ public class SocialServiceImpl implements SocialService {
 			for(Connection connection : targetConnections){
 				connectionsIdList.add(connection.getTargetEntityId());
 			}
-		}
+		}*/
 		return connectionsIdList;
 	}
 
