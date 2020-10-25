@@ -1047,10 +1047,11 @@ public class UserManagementController {
 
 		try {
 			logger.info("isProfileEditable: profile-> " + profileId + " , " + entityId);
-
-			sysUser = userService.getUser(profileId);		
-			if(sysUser.getMembers() != null  && sysUser.getMembers().contains(entityId)){
-				profileEditable = true;
+			if(entityId != null){
+				sysUser = userService.getUser(profileId);		
+				if(SystemConstants.PASSIVE_USER.equalsIgnoreCase(sysUser.getStatus()) || (sysUser.getMembers() != null  && sysUser.getMembers().contains(entityId))){
+					profileEditable = true;
+				}
 			}
 			response = new ResponseEntity(profileEditable, HttpStatus.OK);
 

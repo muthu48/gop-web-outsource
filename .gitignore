@@ -9,6 +9,8 @@ node_modules/
 jaxws/jaxws-client/src/main/
 jaxws/jaxws-endpoint/src/main/webapp/WEB-INF/wsdl/
 src/main/resources/data/
+BOOT-INF/
+META-INF/
  
 # OS Files #
 .DS_Store
