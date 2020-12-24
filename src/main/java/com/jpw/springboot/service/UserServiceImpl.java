@@ -5,13 +5,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 //import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,7 +24,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import com.google.gson.Gson;
+import com.jpw.springboot.util.GoogleTokenVerifier;
+import com.jpw.springboot.TokenAuthenticationService;
 import com.jpw.springboot.model.LegislatorCongressGT;
 import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.ProfileData;
@@ -35,10 +43,15 @@ import com.jpw.springboot.util.SystemConstants;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.util.JSON;
+import com.restfb.DefaultFacebookClient;
+import com.restfb.FacebookClient;
+import com.restfb.Parameter;
+import com.restfb.Version;
 
 @Service("userService")
 @Transactional
 public class UserServiceImpl implements UserService, UserDetailsService {
+	public static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
 	@Autowired
 	private UserRepository userRepository;
@@ -55,11 +68,17 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	@Autowired
 	private ProfileTemplateService profileTemplateService;
 	
+	@Autowired
+	private GoogleTokenVerifier googleTokenVerifier;
+
 	public User findById(String id) {
-		User user = userRepository.findOne(id);
+		User user = null;
+		Optional<User> oUser = userRepository.findById(id);
 		
-		if(user != null)
+		if(oUser.isPresent() && oUser.get() != null){
+			user = oUser.get();
 			user.setPassword(null);
+		}
 		
 		return user;
 	}
@@ -155,13 +174,31 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	public User createUser(User user) throws Exception{
 		User userLookup = userRepository.findByUsername(user.getUsername());
 		if(userLookup == null){
+	/*		if(user.getProfileDatas() != null){
+				List<ProfileData> profileDatas = new ArrayList<ProfileData>();
+				for(ProfileData profileData : user.getProfileDatas()){
+					profileDatas.add(profileData);
+				}
+				user.setProfileDatas(profileDatas);
+			}*/
+			/*if(user.getProfileData() != null){
+				ProfileData pd = profileDataRepository.insert(user.getProfileData());
+				user.setProfileData(pd);
+			}*/
+			if(user.getProfileDatas() != null){
+				//List<ProfileData> profileDatas = new ArrayList<ProfileData>();
+				for(ProfileData profileData : user.getProfileDatas()){
+					//profileDatas.add(profileDataRepository.insert(profileData));
+					profileDataRepository.insert(profileData);
+				}
+				//user.setProfileDatas(profileDatas);
+			}
 			userRepository.insert(user);
-			
-			//createProfileData(user);
+/*			
 			if(user.getProfileDatas() != null && user.getProfileDatas().size() > 0){
 				createBioData(user.getProfileDatas().get(0));
 			}
-			
+*/			
 	       	return user;
 
 		}else{
@@ -176,7 +213,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 
 	public void deleteUserById(String id) {
-		userRepository.delete(id);
+		userRepository.deleteById(id);
 	}
 
 	public void deleteAllUsers() {
@@ -203,7 +240,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 	
 	//public ProfileData createProfileData(User user, String entityType, String profileTemplateId){
-	public ProfileData createProfileData(User user){
+	public ProfileData createProfileData(User user) throws Exception{
 		//TODO 
 		String profileTemplateId=null;
 		String entityType = user.getUserType();
@@ -261,7 +298,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return profileData;
 	}
 	
-	public ProfileData createBioData(ProfileData profileData){
+	public ProfileData createBioData(ProfileData profileData) throws Exception{
 		//TODO 
 	    Gson gson = new Gson();
 		String entityType = profileData.getEntityType();
@@ -305,12 +342,18 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return profileDataRepository.insert(profileData);	
 	}
 	
-	public ProfileData saveProfileData(ProfileData profileData){
+	public ProfileData saveProfileData(ProfileData profileData) throws Exception{
 		ProfileData profileDataDb = null;
 		if(StringUtils.isNoneEmpty(profileData.getId())){
-			profileDataDb = profileDataRepository.findOne(profileData.getId());
-			profileDataDb.setData(profileData.getData());
-			profileDataDb = profileDataRepository.save(profileDataDb);
+			Optional oPprofileData = profileDataRepository.findById(profileData.getId());
+			if(oPprofileData.isPresent()){
+				profileDataDb = (ProfileData)oPprofileData.get();
+				profileDataDb.setData(profileData.getData());
+				profileDataDb = profileDataRepository.save(profileDataDb);
+				
+			}else{
+				throw new Exception("Profile Data not found for id " + profileData.getId());
+			}
 		}else{
 			profileDataDb = profileDataRepository.insert(profileData);
 		}
@@ -328,7 +371,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return profileDataList;		
 	}
 	
-	public ProfileData updateUserProfileData(String entityId, String profileTemplateId, String key, String value){
+	public ProfileData updateUserProfileData(String entityId, String profileTemplateId, String key, String value) throws Exception{
 		//TODO
 		//profileTemplateId = "upCongressLegislatorDefault"
 		//get the profile data, set the biodata template with profile image id and then set the profile data	
@@ -345,6 +388,124 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		}
 		
 		return profileData;
+	}
+	
+	public ResponseEntity tokenVerify(String token, String provider) throws Exception{
+		ResponseEntity response = null;
+
+		if(StringUtils.isNotBlank(provider)){
+			if("GOOGLE".equalsIgnoreCase(provider)){
+				response = tokenVerifyGoogle(token);
+			}else if("FACEBOOK".equalsIgnoreCase(provider)){
+				response = tokenVerifyFB(token);
+				
+			}
+		}
+		
+		return response;
+	}
+	
+	private ResponseEntity tokenVerifyGoogle(String idToken) throws Exception{
+		ResponseEntity response = null;
+		logger.info("Authenticating token " + idToken);
+
+	    if (idToken != null) {
+	    	final Payload payload;
+	      
+	        payload = googleTokenVerifier.verify(idToken);
+	        if (payload != null) {
+	          String subject = payload.getSubject();
+	          response = TokenAuthenticationService.addAuthentication(subject);
+	          //async - check and register the user
+	          User user = new User();
+			  user.setUsername(payload.getEmail());
+			  user.setSourceSystem("GOOGLE");
+			  user.setSourceId(payload.getEmail());
+			  if(payload.containsKey("name")){
+				  user.setDisplayName(payload.get("name").toString());
+			  }
+			  if(payload.containsKey("picture")){
+				  user.setPhotoUrl(payload.get("picture").toString());
+			  }
+
+	          registerUserExternal(user);
+	        }
+	      
+	    }else{
+	    	throw new Exception("Unauthorized access");
+	    }
+	    
+	    return response;
+
+	}
+	
+	private ResponseEntity tokenVerifyFB(String token) throws Exception{
+		ResponseEntity response = null;
+		logger.info("Authenticating FB auth token " + token);
+
+
+		
+	    if (token != null) {
+	    	final FacebookClient facebookClient = new DefaultFacebookClient(token, Version.VERSION_7_0);	    	
+	    	com.restfb.types.User fbUser = facebookClient.fetchObject("me", com.restfb.types.User.class, Parameter.with("fields", "id,name,email,first_name,last_name,picture"));
+	    	
+	    	 if (fbUser != null) {
+	    		 response = TokenAuthenticationService.addAuthentication(fbUser.getEmail());
+
+				 //async - check and register the user
+				 User user = new User();
+				 user.setUsername(fbUser.getEmail());
+				 user.setSourceSystem("FACEBOOK");
+				 user.setSourceId(fbUser.getEmail());
+				 user.setDisplayName(fbUser.getName());
+				 user.setFirstName(fbUser.getFirstName());
+				 user.setLastName(fbUser.getLastName());
+				 if(fbUser.getPicture() != null && fbUser.getPicture().getUrl() != null)
+				  user.setPhotoUrl(fbUser.getPicture().getUrl());
+				
+				 registerUserExternal(user);
+	        }
+	    	 
+	      
+	    }else{
+	    	throw new Exception("Unauthorized access");
+	    }
+	    
+	    return response;
+
+	}
+	
+	@Async
+	//Async method should be PUBLIC and called from separate class
+	public void registerUserExternal(User user){
+	//private void registerUserExternal(String username){
+		logger.info("in registerUserExternal for username " + user.getUsername());
+
+		try {
+			User userSys = findByUserName(user.getUsername()); 
+			if(userSys == null){
+				createUser(user);
+			}else{//user already exist
+				//update user if other attributes such as name, picture got changed ?
+
+				boolean update = false;
+				if(!userSys.getPhotoUrl().equalsIgnoreCase(user.getPhotoUrl())){
+					update = true;
+					userSys.setPhotoUrl(user.getPhotoUrl());
+				}
+				
+				if(!userSys.getDisplayName().equalsIgnoreCase(user.getDisplayName())){
+					update = true;
+					userSys.setDisplayName(user.getDisplayName());
+				}
+				
+				if(update){
+					updateUser(userSys);
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Error in registerUserExternal for username " + user.getUsername() + e.getMessage(), e);
+		}
 	}
 	
 	@Override

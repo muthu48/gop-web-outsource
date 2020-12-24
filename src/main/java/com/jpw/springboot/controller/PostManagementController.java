@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -43,8 +45,9 @@ import com.jpw.springboot.service.UserService;
 import com.jpw.springboot.util.SystemConstants;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.mongodb.gridfs.GridFSDBFile;
-import com.mongodb.gridfs.GridFSFile;
+import com.mongodb.client.gridfs.GridFSFindIterable;
+//import com.mongodb.gridfs.GridFSDBFile;
+import com.mongodb.client.gridfs.model.GridFSFile ;
 
 //@CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -60,7 +63,10 @@ public class PostManagementController {
 
 	@Autowired
 	GridFsOperations gridOperations;
-
+	
+	@Autowired
+	GridFsTemplate gridFsTemplate;
+	
 	//GET ALL POSTS FROM THE SYSTEM
 	//SHOULD NOT BE USED, ONLY FOR INTERNAL USE
 	@RequestMapping(value = "/getAllPosts", method = RequestMethod.GET)
@@ -293,11 +299,15 @@ public class PostManagementController {
 		logger.info("Fetching file  with id {}", id);
 
 		// BasicDBObject query = new BasicDBObject("metadata.postId", id);
-		GridFSDBFile file = gridOperations.findOne(new Query(Criteria.where("_id").is(id)));
-		
+		//GridFSDBFile file = gridOperations.findOne(new Query(Criteria.where("_id").is(id)));
+		GridFSFile file = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(id)));
 		if(file !=null) {
-			return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
-				.body(new InputStreamResource(file.getInputStream()));
+			try {
+				return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
+					.body(new InputStreamResource(gridOperations.getResource(file).getInputStream()));
+			} catch (IllegalStateException | IOException e) {
+				logger.error("Error in downloading file " + e);
+			}
 		}
 		return new ResponseEntity<Post>(HttpStatus.NO_CONTENT);
 		
@@ -308,16 +318,17 @@ public class PostManagementController {
 	public ResponseEntity<?> downloadFileByUser(@PathVariable("userId") String userId) {
 		logger.info("Fetching file  with userId {}", userId);
 		
-		Sort sort = new Sort(Sort.Direction.DESC, "uploadDate");
-		//Sort sort = new Sort(new Order(Sort.Direction.DESC, "metadata.uploadDate"));
-
-		List<GridFSDBFile> files = gridOperations.find(new Query(Criteria.where("metadata.entityId").is(userId).and("metadata.imageType").is(SystemConstants.SMALL_PROFILE_IMAGE_METADATA))
-												 .with(sort));
-		if(files.size() > 0){
-			GridFSDBFile file = files.get(0);
+		GridFSFindIterable files = gridFsTemplate.find(new Query(Criteria.where("metadata.entityId").is(userId).and("metadata.imageType").is(SystemConstants.SMALL_PROFILE_IMAGE_METADATA))
+												 .with(Sort.by(Sort.Direction.DESC, "uploadDate")));
+		if( files != null && files.first() != null){
+			GridFSFile file = files.first();
 			if(file !=null) {
-				return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
-					.body(new InputStreamResource(file.getInputStream()));
+				try {
+					return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
+							.body(new InputStreamResource(gridOperations.getResource(file).getInputStream()));
+				} catch (IllegalStateException | IOException e) {
+					logger.error("Error in downloading file " + e);
+				}
 			}
 		}
 		return new ResponseEntity<Post>(HttpStatus.NO_CONTENT);
@@ -329,19 +340,21 @@ public class PostManagementController {
 	public ResponseEntity<?> downloadFileForEntity(@PathVariable("entityId") String entityId,
 			@RequestParam (value = "metadatatype", required = false) String metadatatype) {
 		logger.info("Fetching file  for entityId ", entityId);
-		
-		Sort sort = new Sort(Sort.Direction.DESC, "uploadDate");
 
 		if(!StringUtils.isEmpty(metadatatype)){}
 		
-		List<GridFSDBFile> files = gridOperations.find(new Query(Criteria.where("metadata.entityId").is(entityId).and("metadata.imageType").is(SystemConstants.SMALL_PROFILE_IMAGE_METADATA))
-				 .with(sort));
+		GridFSFindIterable files = gridOperations.find(new Query(Criteria.where("metadata.entityId").is(entityId).and("metadata.imageType").is(SystemConstants.SMALL_PROFILE_IMAGE_METADATA))
+				 .with(Sort.by(Sort.Direction.DESC, "uploadDate")));
 		
-		if(files.size() > 0){
-			GridFSDBFile file = files.get(0);
+		if( files != null && files.first() != null){
+			GridFSFile file = files.first();
 			if(file !=null) {
-				return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
-					.body(new InputStreamResource(file.getInputStream()));
+				try {
+					return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
+							.body(new InputStreamResource(gridOperations.getResource(file).getInputStream()));
+				} catch (IllegalStateException | IOException e) {
+					logger.error("Error in downloading file " + e);
+				}
 			}
 		}
 		return new ResponseEntity<Post>(HttpStatus.NO_CONTENT);
@@ -407,9 +420,8 @@ public class PostManagementController {
 				//metaData.put("userId", post.getUserId());
 				metaData.put("entityId", post.getEntityId());
 				String fileContentType = URLConnection.guessContentTypeFromName(fileName);
-				//GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, "image/png", metaData);
-				GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, fileContentType, metaData);
-				String fileId = gridFsFile.getId().toString();
+				ObjectId id = gridFsTemplate.store(inputStream, fileName, fileContentType, metaData);
+				String fileId = id.toString();
 				relatedFiles.add(fileId);
 
 			}
@@ -421,9 +433,8 @@ public class PostManagementController {
 				//metaData.put("userId", post.getUserId());
 				metaData.put("entityId", post.getEntityId());
 				String fileContentType = URLConnection.guessContentTypeFromName(fileName);
-				GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, fileContentType, metaData);
-				//GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, "image/png", metaData);
-				String fileId = gridFsFile.getId().toString();
+				ObjectId id = gridFsTemplate.store(inputStream, fileName, fileContentType, metaData);
+				String fileId = id.toString();
 				relatedFiles.add(fileId);
 
 			}

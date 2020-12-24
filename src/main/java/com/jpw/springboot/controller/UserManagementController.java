@@ -13,15 +13,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.bson.BSONObject;
+import org.bson.types.ObjectId;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+import org.springframework.data.util.Version;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -38,6 +45,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import com.jpw.springboot.TokenAuthenticationService;
 import com.jpw.springboot.model.LegislatorCongressGT;
 import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.Post;
@@ -63,7 +72,14 @@ public class UserManagementController {
 	GridFsOperations gridOperations;
 	
 	@Autowired
+	GridFsTemplate gridFsTemplate;
+		  
+	@Autowired
 	UserService userService;
+	
+	@Autowired
+	BuildProperties buildProperties;
+	
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
 	
 	@Autowired
@@ -71,6 +87,13 @@ public class UserManagementController {
 	
 	public UserManagementController(BCryptPasswordEncoder bCryptPasswordEncoder){
 		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+	}
+	
+	@RequestMapping(value = "/buildInfo", method = RequestMethod.GET)
+	public String ping() {
+		String version = buildProperties.getVersion();
+
+		return "Service is available, build version " + version;
 	}
 	
 	@RequestMapping(value = "/getAllUsers", method = RequestMethod.GET)
@@ -276,11 +299,11 @@ public class UserManagementController {
 			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, "upRole");
 			if(profileDatas != null && profileDatas.size() > 0){
 				profileData = profileDatas.get(0);//PICKING ONE TO USE IT IN THE RESPONSE
-				BasicDBList profileDataList = new BasicDBList();
+				/*BasicDBList profileDataList = new BasicDBList();
 				for(ProfileData profile : profileDatas){
 					profileDataList.add(profile.getData());
 				}
-				profileData.setDataList(profileDataList);
+				profileData.setDataList(profileDataList);*/
 				response = new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
 
 			}else{
@@ -496,8 +519,24 @@ public class UserManagementController {
 
 		response = new ResponseEntity<User>(user, HttpStatus.CREATED);
 		}catch(Exception e){
-			response = new ResponseEntity<String>("Error in createUser  for entityId " + user.getUsername(), HttpStatus.INTERNAL_SERVER_ERROR);
-			logger.error("Error in createUser  for entityId " + user.getUsername(), e);
+			response = new ResponseEntity<String>("Error in createUser  " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+			logger.error("Error in createUser  " + e.getMessage(), e);
+		}
+		
+		return response;
+	}
+
+	//TokenVerify - Google/Facebook
+	@RequestMapping(value = "/tokenVerify", method = RequestMethod.POST)
+	public ResponseEntity<?> tokenVerify(@RequestHeader("X-ID-TOKEN") String token, @RequestHeader("PROVIDER") String provider) {
+		logger.info("Verifying token: " + token + " ,provider: " + provider);
+		ResponseEntity response = null;
+
+		try{
+			response = userService.tokenVerify(token, provider);
+		}catch(Exception e){
+			response = new ResponseEntity<String>("Error in verifying token", HttpStatus.UNAUTHORIZED);
+			logger.error("Error in verifying token " + e.getMessage(), e);
 		}
 		
 		return response;
@@ -622,7 +661,12 @@ public class UserManagementController {
 			UriComponentsBuilder ucBuilder) {
 		logger.info("Creating user ProfileData : {}", profileData);
 
-		profileData = userService.saveProfileData(profileData);
+		try {
+			profileData = userService.saveProfileData(profileData);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			return new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);		
+		}
 
 		return new ResponseEntity<ProfileData>(profileData, HttpStatus.OK);
 	}
@@ -1003,8 +1047,10 @@ public class UserManagementController {
 				metaData.put("imageType", SystemConstants.SMALL_PROFILE_IMAGE_METADATA);
 				//TODO
 				//MAKE FILE UPLOAD AS REUSABLE, CHANGE THE FILE TYPE
-				GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, "image/png", metaData);
-				String fileId = gridFsFile.getId().toString();
+				//GridFSFile gridFsFile = gridOperations.store(inputStream, fileName, "image/png", metaData);
+				ObjectId id = gridFsTemplate.store(inputStream, fileName, file.getContentType(), metaData);
+				//String fileId = gridFsFile.getId().toString();
+				String fileId = id.toString();
 				ProfileData profileData = userService.updateUserProfileData(user.getUsername(), profileTemplateId, "profileSMImageId", fileId);
 				if(user.getProfileDatas() != null)
 					user.getProfileDatas().add(profileData);

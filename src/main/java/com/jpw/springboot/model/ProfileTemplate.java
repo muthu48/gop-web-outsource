@@ -3,11 +3,13 @@ package com.jpw.springboot.model;
 import java.util.ArrayList;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.mongodb.BasicDBObject;
 
 //PROFILE TEMPLATE DEFINITION, 
 //THIS CAN BE ASSOCIATED WITH ANY ENTITY AS PROFILEDATA
+@Document
 public class ProfileTemplate extends AbstractModel{
 	@Id	
 	private String id;	

@@ -3,7 +3,9 @@ package com.jpw.springboot.model;
 import java.util.Date;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
+@Document
 public class Connection extends AbstractModel {
 	@Id	
 	private String id;		
@@ -22,7 +24,7 @@ public class Connection extends AbstractModel {
 	private boolean defaultConnected = false; //
 	
 	
-	  public String getUserId() {
+	public String getUserId() {
 		return userId;
 	}
 	public void setUserId(String userId) {

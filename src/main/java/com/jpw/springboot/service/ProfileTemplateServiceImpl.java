@@ -17,7 +17,7 @@ public class ProfileTemplateServiceImpl implements ProfileTemplateService {
 	private ProfileTemplateRepository profileTemplateRepository;
 
 	public ProfileTemplate findById(String id) {
-		return profileTemplateRepository.findOne(id);
+		return null;//profileTemplateRepository.findOne(id);
 	}
 
 	public ProfileTemplate findByName(String name) {
@@ -37,7 +37,7 @@ public class ProfileTemplateServiceImpl implements ProfileTemplateService {
 	}
 
 	public void deleteProfileTemplateById(String id) {
-		profileTemplateRepository.delete(id);
+		//profileTemplateRepository.delete(id);
 	}
 
 	public void deleteAllProfileTemplates() {

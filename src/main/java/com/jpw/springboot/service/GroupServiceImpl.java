@@ -21,7 +21,7 @@ public class GroupServiceImpl implements GroupService {
 	private ConnectionRepository connectionEntityRepository;
 */	
 	public Group findById(String id) {
-		return groupRepository.findOne(id);
+		return null;//groupRepository.findOne(id);
 	}
 	
 	public Group findBySourceId(String sourceId){
@@ -45,7 +45,7 @@ public class GroupServiceImpl implements GroupService {
 	}
 
 	public void deleteGroupById(String id) {
-		groupRepository.delete(id);
+		//groupRepository.delete(id);
 	}
 
 	public void deleteAllGroups() {

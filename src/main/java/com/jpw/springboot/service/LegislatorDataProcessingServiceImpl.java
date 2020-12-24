@@ -32,7 +32,6 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 
-import com.jpw.springboot.controller.UserManagementController;
 import com.jpw.springboot.model.LegislatorCongressGT;
 import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.ProfileData;

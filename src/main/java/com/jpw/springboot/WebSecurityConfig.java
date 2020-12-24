@@ -1,8 +1,11 @@
 package com.jpw.springboot;
 
+import java.util.Collections;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,14 +26,16 @@ import com.jpw.springboot.service.UserServiceImpl;
 
 @Configuration
 @EnableWebSecurity
-//@EnableMongoRepositories
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	private UserServiceImpl userService;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+    //private final GoogleIdTokenVerifierFilter googleIdTokenVerifierFilter;
 
+    @Autowired
     public WebSecurityConfig(UserServiceImpl userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userService = userService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        //this.googleIdTokenVerifierFilter = googleIdTokenVerifierFilter;
     }
 	    
   @Override
@@ -61,6 +66,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	  .antMatchers("/user/legisv1/**").permitAll()
 	  .antMatchers("/user/legis/biodata/**").permitAll()
 	  .antMatchers("/post/downloadFile/user/**").permitAll()
+      .antMatchers(HttpMethod.POST, "/tokenVerify/**").permitAll()
 	  .anyRequest().authenticated()
       .and()
       .addFilter(new JWTLoginFilter(authenticationManager()))
@@ -96,7 +102,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	            public void addCorsMappings(CorsRegistry registry) {
 	                registry.addMapping("/**")
 	                //.allowedOrigins("http://localhost:4200", "http://localhost:4200/news")
-	                .allowedOrigins("http://localhost:4200")
+	                .allowedOrigins("http://localhost:4200", "https://gopolitix.com", "https://www.gopolitix.com")
 	                //.allowedOrigins("http://localhost:4200/news")
 	                //.allowedOrigins("*")
 	                .allowedMethods("GET", "POST", "PUT", "DELETE","OPTIONS")
@@ -110,6 +116,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	            }
 
 	        };
-	    }
-	   
+  }
+  /*
+  @Bean
+  public FilterRegistrationBean googleIdTokenVerifierBean() {
+    FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+    filterRegistrationBean.setFilter(googleIdTokenVerifierFilter);
+    filterRegistrationBean.setUrlPatterns(Collections.singletonList("/gTokenVerify/*"));
+    return filterRegistrationBean;
+  }
+  */
 }

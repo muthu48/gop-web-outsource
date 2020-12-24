@@ -3,6 +3,8 @@ package com.jpw.springboot.service;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+
 import com.jpw.springboot.model.LegislatorCongressGT;
 import com.jpw.springboot.model.LegislatorOpenState;
 import com.jpw.springboot.model.ProfileData;
@@ -30,13 +32,14 @@ public interface UserService {
 
 	boolean isUserExist(User user) throws Exception;
 	boolean isUserExist(UserProfile user) throws Exception;
-	public ProfileData createProfileData(User user);
+	public ProfileData createProfileData(User user) throws Exception;
 	public ProfileData createProfileData(ProfileData profileData);
-	public ProfileData createBioData(ProfileData profileData);
-	public ProfileData saveProfileData(ProfileData profileData);
+	public ProfileData createBioData(ProfileData profileData) throws Exception;
+	public ProfileData saveProfileData(ProfileData profileData) throws Exception;
 	public List<ProfileData> getProfileDatas(String entityId);
 	public List<ProfileData> getProfileDataByProfileTemplateId(String entityId, String profileTemplateId);
-	public ProfileData updateUserProfileData(String entityId, String profileTemplateId, String key, String value);
-
+	public ProfileData updateUserProfileData(String entityId, String profileTemplateId, String key, String value) throws Exception;
+	public ResponseEntity tokenVerify(String token, String provider) throws Exception;
+	public void registerUserExternal(User user);
 	
 }

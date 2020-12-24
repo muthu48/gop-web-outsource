@@ -1,18 +1,30 @@
 package com.jpw.springboot.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import com.mongodb.BasicDBObject;
 
+@Document
 public class User extends AbstractModel {
 	@Id	
 	private String userId;
+	
+	@Indexed(unique = true)
 	private String username; //email/phone/other alphanumeric
+	//field will be indexed with a constraint of unique
+	
 	private String full_name;//Display name
 	private String password;//[applicable only for PUBLICUSER/LEGISLATOR]
 	private String userType;//SystemConstants - LEGISLATOR, PUBLICUSER, LEGISLATIVE_DISTRICT, POLITICAL_PARTY
@@ -49,15 +61,23 @@ public class User extends AbstractModel {
 	private String sourceId;	
 	
 	private Enum tagName;
+	@Transient
 	private List<Connection> connections;
-	private UserProfile userProfile; // contains profileTemplates, profileDatas
+	//private UserProfile userProfile; // contains profileTemplates, profileDatas
 	
 	//Available Templates for an user
 	//Depends on EntityType
+	@Transient	
 	private List<ProfileTemplate> profileTemplates;		
 	//contains Data for each associated Template
+	//private List<ProfileData> profileDatas;
+/*	@DBRef
+	private ProfileData profileData;*/
+	
+	//@DBRef
+	@Transient	
+	private List<ProfileData> profileDatas = new ArrayList<ProfileData>();
 
-	private List<ProfileData> profileDatas;		
 	//private LegislatorOpenState legislatorOpenState;	
 	
 	/**
@@ -268,6 +288,14 @@ public class User extends AbstractModel {
 		this.profileDatas = profileDatas;
 	}
 
+/*	public ProfileData getProfileData() {
+		return profileData;
+	}
+
+	public void setProfileData(ProfileData profileData) {
+		this.profileData = profileData;
+	}*/
+
 	public String getUsername() {
 		return username;
 	}
@@ -292,14 +320,14 @@ public class User extends AbstractModel {
 		this.connections = connections;
 	}
 
-	public UserProfile getUserProfile() {
+/*	public UserProfile getUserProfile() {
 		return userProfile;
 	}
 
 	public void setUserProfile(UserProfile userProfile) {
 		this.userProfile = userProfile;
 	}
-
+*/
 	public List<ProfileTemplate> getProfileTemplates() {
 		return profileTemplates;
 	}
