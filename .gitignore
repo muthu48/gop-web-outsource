@@ -83,6 +83,7 @@ atlassian-ide-plugin.xml
 local.properties
 .classpath
 .settings/
+.settings/org.eclipse.jdt.core.prefs
 .loadpath
 
 # External tool builders
