@@ -14,7 +14,7 @@ import com.jpw.springboot.model.UserProfile;
 public interface UserService {
 	
 	User findById(String id);
-	public User findByUserName(String name) throws Exception;
+	public User findByUserName(String name, boolean pwdRequired) throws Exception;
 	User getUser(String name) throws Exception;
 	LegislatorOpenState findLegislator(String name);
 	public LegislatorCongressGT findLegislatorCongress(String name);
