@@ -83,11 +83,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return user;
 	}
 
-	public User findByUserName(String name) throws Exception {
+	public User findByUserName(String name, boolean pwdRequired) throws Exception {
 		User user = userRepository.findByUsername(name);
 
 		//CAN BE DONE THRU INTERCEPTOR
-		if(user != null)
+		if(user != null && !pwdRequired)
 			user.setPassword(null);
 		
 		return user;
@@ -124,7 +124,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	public User getUser(String username) throws Exception{
 		List<String> profileTemplateIdsList = new ArrayList<String>();
 		String userType = null;
-		User user = findByUserName(username);
+		User user = findByUserName(username, false);
 				
 		if(user == null){
 			throw new Exception("User not found - " + username);
@@ -225,7 +225,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 
 	public boolean isUserExist(User user) throws Exception{
-		return findByUserName(user.getUsername()) != null;
+		return findByUserName(user.getUsername(), false) != null;
 	}
 
 	@Override
@@ -236,7 +236,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 	@Override
 	public boolean isUserExist(UserProfile user) throws Exception{
-		return findByUserName(user.getUserId()) != null;
+		return findByUserName(user.getUserId(), false) != null;
 	}
 	
 	//public ProfileData createProfileData(User user, String entityType, String profileTemplateId){
@@ -418,16 +418,43 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	          response = TokenAuthenticationService.addAuthentication(subject);
 	          //async - check and register the user
 	          User user = new User();
-			  user.setUsername(payload.getEmail());
+
+	          List<ProfileData> profileDatas = new ArrayList<ProfileData>();
+	          ProfileData profileData = new ProfileData();
+	          profileData.setProfileTemplateId(SystemConstants.PROFILE_TEMPLATE_BIODATA);
+	          
+	          BasicDBObject data = new BasicDBObject();
+			  
+	          user.setUsername(payload.getEmail());
+	          user.setUserType(SystemConstants.USERTYPE_PUBLIC);
+			  profileData.setEntityId(user.getUsername());
 			  user.setSourceSystem("GOOGLE");
 			  user.setSourceId(payload.getEmail());
+			  data.append("emailId", user.getSourceId());
 			  if(payload.containsKey("name")){
 				  user.setDisplayName(payload.get("name").toString());
+				  data.append("full_name", user.getDisplayName());
+			  }
+			  if(payload.containsKey("given_name")){
+				  user.setFirstName(payload.get("given_name").toString());
+				  data.append("first_name", user.getFirstName());
+			  }
+			  if(payload.containsKey("family_name")){
+				  user.setLastName(payload.get("family_name").toString());
+				  data.append("last_name", user.getLastName());
 			  }
 			  if(payload.containsKey("picture")){
 				  user.setPhotoUrl(payload.get("picture").toString());
 			  }
 
+			  profileData.setData(data);
+			  profileData.setCurrent(true);
+			  profileDatas.add(profileData);
+			  user.setProfileDatas(profileDatas);
+			  user.setStatus(SystemConstants.ACTIVE);
+			  ArrayList<String> members = new ArrayList<String>();
+			  members.add(user.getUsername());
+			  user.setMembers(members);
 	          registerUserExternal(user);
 	        }
 	      
@@ -454,15 +481,51 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 				 //async - check and register the user
 				 User user = new User();
+		         List<ProfileData> profileDatas = new ArrayList<ProfileData>();
+		         ProfileData profileData = new ProfileData();
+		         profileData.setProfileTemplateId(SystemConstants.PROFILE_TEMPLATE_BIODATA);
+		          
+		         BasicDBObject data = new BasicDBObject();
+
 				 user.setUsername(fbUser.getEmail());
+		         user.setUserType(SystemConstants.USERTYPE_PUBLIC);
+				 profileData.setEntityId(user.getUsername());
+				  
 				 user.setSourceSystem("FACEBOOK");
-				 user.setSourceId(fbUser.getEmail());
-				 user.setDisplayName(fbUser.getName());
-				 user.setFirstName(fbUser.getFirstName());
-				 user.setLastName(fbUser.getLastName());
+				 if(fbUser.getEmail() != null) {
+					 user.setSourceId(fbUser.getEmail());
+					 data.append("emailId", user.getSourceId());
+				 }
+
+				 if(fbUser.getName() != null) {
+					 user.setDisplayName(fbUser.getName());
+					 data.append("full_name", user.getDisplayName());
+				 }
+					 
+				 if(fbUser.getFirstName() != null) {
+					 user.setFirstName(fbUser.getFirstName());
+					 data.append("first_name", user.getFirstName());
+				 }
+				 
+				 if(fbUser.getLastName() != null) {
+					 user.setLastName(fbUser.getLastName());
+					 data.append("last_name", user.getLastName());
+				 }
+				 
 				 if(fbUser.getPicture() != null && fbUser.getPicture().getUrl() != null)
 				  user.setPhotoUrl(fbUser.getPicture().getUrl());
 				
+
+				 profileData.setData(data);
+				 profileData.setCurrent(true);
+				 profileDatas.add(profileData);
+				 user.setProfileDatas(profileDatas);
+				 
+				 user.setStatus(SystemConstants.ACTIVE);
+				 ArrayList<String> members = new ArrayList<String>();
+				 members.add(user.getUsername());
+				 user.setMembers(members); 
+				 
 				 registerUserExternal(user);
 	        }
 	    	 
@@ -482,7 +545,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		logger.info("in registerUserExternal for username " + user.getUsername());
 
 		try {
-			User userSys = findByUserName(user.getUsername()); 
+			User userSys = findByUserName(user.getUsername(), false); 
 			if(userSys == null){
 				createUser(user);
 			}else{//user already exist
