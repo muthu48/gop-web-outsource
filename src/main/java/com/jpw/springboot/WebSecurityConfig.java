@@ -65,8 +65,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	  .antMatchers("/user/legis/**").permitAll()
 	  .antMatchers("/user/legisv1/**").permitAll()
 	  .antMatchers("/user/legis/biodata/**").permitAll()
-	  .antMatchers("/post/downloadFile/user/**").permitAll()
+	  .antMatchers("/post/downloadFile/**").permitAll()
+	  .antMatchers("/profile/template/**").permitAll()
       .antMatchers(HttpMethod.POST, "/tokenVerify/**").permitAll()
+      .antMatchers(HttpMethod.GET, "/api/social/**").permitAll()
 	  .anyRequest().authenticated()
       .and()
       .addFilter(new JWTLoginFilter(authenticationManager()))
@@ -101,10 +103,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	            @Override
 	            public void addCorsMappings(CorsRegistry registry) {
 	                registry.addMapping("/**")
-	                //.allowedOrigins("http://localhost:4200", "http://localhost:4200/news")
-	                .allowedOrigins("http://localhost:4200", "https://gopolitix.com", "https://www.gopolitix.com")
-	                //.allowedOrigins("http://localhost:4200/news")
-	                //.allowedOrigins("*")
+	                //.allowedOrigins("http://localhost:4200", "https://gopolitix.com", "https://www.gopolitix.com")
+	                .allowedOrigins("https://gopolitix.com", "https://www.gopolitix.com")
 	                .allowedMethods("GET", "POST", "PUT", "DELETE","OPTIONS")
 	                .allowedHeaders("*");
 	            }

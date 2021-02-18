@@ -1062,7 +1062,7 @@ public class UserManagementController {
 
 				//not required, as gridfs has the entityId metadata
 				//update profile image reference
-				User userTemp = userService.findByUserName(user.getUsername());
+				User userTemp = userService.findByUserName(user.getUsername(), true);
 				userTemp.setProfileAvatarImgFileId(fileId);
 				userService.updateUser(userTemp);
 
