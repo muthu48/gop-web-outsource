@@ -13,9 +13,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import javax.json.JsonValue;
 import javax.servlet.http.HttpServletResponse;
 
 import org.bson.BSONObject;
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -46,6 +48,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import com.google.gson.Gson;
 import com.jpw.springboot.TokenAuthenticationService;
 import com.jpw.springboot.model.LegislatorCongressGT;
 import com.jpw.springboot.model.LegislatorOpenState;
@@ -62,6 +65,8 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 //import com.jpw.springboot.util.CustomErrorType;
 import com.mongodb.gridfs.GridFSFile;
+import com.mongodb.util.JSON;
+import com.restfb.json.Json;
 
 @RestController
 @RequestMapping("/user")
@@ -228,11 +233,14 @@ public class UserManagementController {
 
 		ResponseEntity response = null;
 		ProfileData profileData = null;
+		String profileName = "upDefault";
+
 		try{
 			User user = userService.getUser(userName);
-			
+			if(user != null && user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS)) {
+				profileName = SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL;
+			}
 
-			String profileName = "upDefault";
 			//String profileName = (user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) ? "upCongressLegislatorExternal" : "upDefault");
 			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, profileName);
 			if(profileDatas != null && profileDatas.size() > 0){
@@ -418,7 +426,7 @@ public class UserManagementController {
 	 * */
 	@RequestMapping(value = "/legis/loadCongressLegislatorsToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadCongressLegislatorsToDb() {
-		String filePath = "C:\\Users\\OPSKY\\Documents\\Project\\Data\\congress\\congress-legislators-govtrack\\legislators-current.json";
+		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\legislators-current.json";
 		logger.info("loadCongressLegislatorsToDb " + filePath);
 
 		ResponseEntity response = null;
@@ -448,7 +456,7 @@ public class UserManagementController {
 	
 	@RequestMapping(value = "/legis/loadCongressExecutivesToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadCongressExecutivesToDb() {
-		String filePath = "C:\\Users\\OPSKY\\Documents\\Project\\Data\\congress\\congress-legislators-govtrack\\executive.json";
+		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\executive.json";
 		logger.info("loadCongressExecutivesToDb " + filePath);
 
 		ResponseEntity response = null;
@@ -483,7 +491,7 @@ public class UserManagementController {
 	 * */
 	@RequestMapping(value = "/legis/loadStateLegislatorsToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadStateLegislatorsToDb() {
-		String filePath = "C:\\Users\\OPSKY\\Documents\\Project\\Data\\Openstates";
+		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Openstates";
 		//logger.info("loadStateLegislatorsToDb data/Openstates/pa/legislators");
 		logger.info("loadStateLegislatorsToDb " + filePath);
 		ResponseEntity response = null;
@@ -742,7 +750,7 @@ public class UserManagementController {
 			jObj = new JSONObject(jsonStr);
 			logger.info("addCircleUser : " + jObj.getString("circlememberUsername") + " to " + jObj.getString("username"));
 
-			sysUser = userService.getUser(jObj.getString("username"));
+			sysUser = userService.getUser(jObj.getString("username"), true);
 			circleUser = userService.getUser(jObj.getString("circlememberUsername"));
 			/*
 			if(sysUser.getCircleUsers() == null){
@@ -768,12 +776,19 @@ public class UserManagementController {
 
 			}else{
 				boolean categoryExist = false;
-				for(BasicDBObject circle:sysUser.getCircleUsersInfo()){
+				//for(BasicDBObject circle:sysUser.getCircleUsersInfo()){
+				for(int i=0; i<sysUser.getCircleUsersInfo().size(); i++) {
+						Gson gson = new Gson();
+						String json = gson.toJson(sysUser.getCircleUsersInfo().get(i));
+						
+						BasicDBObject circle = (BasicDBObject)JSON.parse(json);	
 					if(circle.containsKey(circleUser.getUserType())){
 						categoryExist = true;
 						usernameList = (ArrayList<String>)circle.get(circleUser.getUserType());
 						if(!usernameList.contains(jObj.getString("circlememberUsername"))){
 							usernameList.add(jObj.getString("circlememberUsername"));
+							sysUser.getCircleUsersInfo().remove(i);
+							sysUser.getCircleUsersInfo().add(circle);
 						}else{
 							throw new Exception("User already in Circle");
 						}
@@ -805,7 +820,11 @@ public class UserManagementController {
 
 		return response;
 	}
-	
+	public Document getDocument(DBObject doc)
+	{
+	   if(doc == null) return null;
+	   return new Document(doc.toMap());
+	}
 	@RequestMapping(value = "/removeCircleUser", method = RequestMethod.POST)
 	public ResponseEntity<ArrayList<BasicDBObject>> removecircleuser(@RequestBody String jsonStr) {
 		
@@ -829,15 +848,23 @@ public class UserManagementController {
 			if(sysUser.getCircleUsersInfo() != null){
 				boolean removed = false;
 
-				for(BasicDBObject circle:sysUser.getCircleUsersInfo()){
+				//for(BasicDBObject circle:sysUser.getCircleUsersInfo()){
+				for(int i=0; i<sysUser.getCircleUsersInfo().size(); i++) {
+					Gson gson = new Gson();
+					String json = gson.toJson(sysUser.getCircleUsersInfo().get(i));
+					
+					BasicDBObject circle = (BasicDBObject)JSON.parse(json);	
 					if(circle.containsKey(circleUser.getUserType())){
 						usernameList = (ArrayList<String>)circle.get(circleUser.getUserType());
 						usernameList.remove(jObj.getString("circlememberUsername"));
+						
+						sysUser.getCircleUsersInfo().remove(i);
+						sysUser.getCircleUsersInfo().add(circle);
 						removed = true;
 						break;
 					}
 				}
-				
+
 				if(!removed){
 					throw new Exception("User not removed from Circle as not exist.");
 				}
@@ -897,8 +924,18 @@ public class UserManagementController {
 			logger.info("isInCircle : " + profileId + " , " + entityId);
 
 			sysUser = userService.getUser(entityId);		
-			if(sysUser.getCircleUsersInfo() != null){
-				for(BasicDBObject circle:sysUser.getCircleUsersInfo()){
+			
+			ArrayList<BasicDBObject> circleUsers = sysUser.getCircleUsersInfo();
+			
+			if(circleUsers != null){
+				for(int i=0; i<circleUsers.size(); i++) {
+					Gson gson = new Gson();
+					String json = gson.toJson(circleUsers.get(i));
+					
+					BasicDBObject circle = (BasicDBObject)JSON.parse(json);
+					//JsonValue circle = (JsonValue) Json.parse(circleUsers.get(i).toString());
+				//for(BasicDBObject circle:circleUsers){
+					//Document circle = new Document(circleUsers.get(i).toMap());
 					Set<String> keys = circle.keySet();
 					for(String key:keys){
 						ArrayList<String> usernameList = (ArrayList<String>)circle.get(key);
@@ -936,7 +973,7 @@ public class UserManagementController {
 			jObj = new JSONObject(jsonStr);
 			logger.info("addMember : " + jObj.getString("memberUsername") + " to " + jObj.getString("username"));
 
-			sysUser = userService.getUser(jObj.getString("username"));
+			sysUser = userService.getUser(jObj.getString("username"), true);
 			if(sysUser.getMembers() == null){
 				ArrayList<String> members = new ArrayList<String>(); 
 				members.add(jObj.getString("memberUsername"));

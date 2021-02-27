@@ -15,7 +15,7 @@ public interface UserService {
 	
 	User findById(String id);
 	public User findByUserName(String name, boolean pwdRequired) throws Exception;
-	User getUser(String name) throws Exception;
+	User getUser(String name, boolean... pwdRequired) throws Exception;
 	LegislatorOpenState findLegislator(String name);
 	public LegislatorCongressGT findLegislatorCongress(String name);
 	public LegislatorCongressGT findLegislatorCongressByBioguide(String name);

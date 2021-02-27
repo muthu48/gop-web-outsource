@@ -121,10 +121,15 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return legislator;
 	}
 	
-	public User getUser(String username) throws Exception{
+	public User getUser(String username, boolean... pwdsRequired) throws Exception{
 		List<String> profileTemplateIdsList = new ArrayList<String>();
 		String userType = null;
-		User user = findByUserName(username, false);
+		boolean pwdRequired = false;
+		
+		if(pwdsRequired != null && pwdsRequired.length > 0)
+			pwdRequired = pwdsRequired[0];
+		
+		User user = findByUserName(username, pwdRequired);
 				
 		if(user == null){
 			throw new Exception("User not found - " + username);
@@ -172,6 +177,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 	}
 
 	public User createUser(User user) throws Exception{
+		if(user == null || user.getUsername() == null) {
+			throw new Exception("User cannot be created without username");
+		}
+		
 		User userLookup = userRepository.findByUsername(user.getUsername());
 		if(userLookup == null){
 	/*		if(user.getProfileDatas() != null){

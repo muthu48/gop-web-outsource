@@ -122,7 +122,7 @@ public class PostManagementController {
 			if(!StringUtils.isEmpty(pageNumberParam)){
 				pageNumber = Integer.parseInt(pageNumberParam);	
 			}
-			List<Post> posts = postService.findPosts(entityId, pageNumber);
+			List<Post> posts = postService.findPosts(entityId, pageNumber, true);
 			//List<Post> posts = postService.findPosts(entityId, pageNumber);
 			if (posts.isEmpty()) {
 				return new ResponseEntity(HttpStatus.NO_CONTENT);
