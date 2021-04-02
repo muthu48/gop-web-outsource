@@ -67,7 +67,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	  .antMatchers(HttpMethod.GET, "/user/legis/biodata/**").permitAll()
 	  .antMatchers(HttpMethod.GET, "/post/downloadFile/**").permitAll()
 	  .antMatchers(HttpMethod.GET, "/profile/template/**").permitAll()
-      .antMatchers(HttpMethod.POST, "/tokenVerify/**").permitAll()
+      .antMatchers(HttpMethod.POST, "/user/tokenVerify/**").permitAll()
       .antMatchers(HttpMethod.GET, "/api/social/**").permitAll()
 	  .anyRequest().authenticated()
       .and()

@@ -1,4 +1,4 @@
-package com.jpw.springboot.notification.repository;
+package com.jpw.springboot.repositories;
 
 import com.jpw.springboot.model.Notification;
 import org.springframework.data.mongodb.repository.MongoRepository;

@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.jpw.springboot.model.Notification;
-import com.jpw.springboot.notification.service.NotificationPollingService;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -16,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
@@ -27,7 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,12 +32,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartRequest;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jpw.springboot.model.Post;
-import com.jpw.springboot.model.PostVO;
+import com.jpw.springboot.service.NotificationPollingService;
 import com.jpw.springboot.service.PostService;
 import com.jpw.springboot.service.UserService;
 import com.jpw.springboot.util.SystemConstants;
@@ -299,6 +294,7 @@ public class PostManagementController {
 		return response;
 	}
 	
+	//USED FOR FILE ATTACHMENT DOWNLOAD
 	@RequestMapping(value = "downloadFile/{id}", method = RequestMethod.GET)
 	public ResponseEntity<?> downloadFile(@PathVariable("id") String id) {
 		logger.info("Fetching file  with id {}", id);
@@ -308,10 +304,11 @@ public class PostManagementController {
 		GridFSFile file = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(id)));
 		if(file !=null) {
 			try {
-				return ResponseEntity.ok().contentType(MediaType.valueOf(file.getContentType()))
+				return ResponseEntity.ok().contentType(MediaType.valueOf(file.getMetadata().getString("_contentType")))
 					.body(new InputStreamResource(gridOperations.getResource(file).getInputStream()));
-			} catch (IllegalStateException | IOException e) {
+			} catch (Exception e) {
 				logger.error("Error in downloading file " + e);
+				return new ResponseEntity<Post>(HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}
 		return new ResponseEntity<Post>(HttpStatus.NO_CONTENT);
@@ -319,6 +316,7 @@ public class PostManagementController {
 
 	}
 
+	//OBSOLETE?
 	@RequestMapping(value = "downloadFile/user/{userId}/", method = RequestMethod.GET)
 	public ResponseEntity<?> downloadFileByUser(@PathVariable("userId") String userId) {
 		logger.info("Fetching file  with userId {}", userId);
@@ -341,6 +339,7 @@ public class PostManagementController {
 
 	}
 	
+	//USED FOR ENTITY'S PROFILE SMALL IMAGE DOWNLOAD
 	@RequestMapping(value = "downloadFile/entity/{entityId}/", method = RequestMethod.GET)
 	public ResponseEntity<?> downloadFileForEntity(@PathVariable("entityId") String entityId,
 			@RequestParam (value = "metadatatype", required = false) String metadatatype) {

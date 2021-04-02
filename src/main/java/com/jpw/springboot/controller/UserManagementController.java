@@ -237,10 +237,11 @@ public class UserManagementController {
 
 		try{
 			User user = userService.getUser(userName);
-			if(user != null && user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS)) {
-				profileName = SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL;
-			}
-
+			/*
+			 * if(user != null &&
+			 * user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS)) {
+			 * profileName = SystemConstants.PROFILE_TEMPLATE_BIODATA_EXTERNAL; }
+			 */
 			//String profileName = (user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) ? "upCongressLegislatorExternal" : "upDefault");
 			List<ProfileData> profileDatas = userService.getProfileDataByProfileTemplateId(userName, profileName);
 			if(profileDatas != null && profileDatas.size() > 0){
@@ -528,7 +529,7 @@ public class UserManagementController {
 		response = new ResponseEntity<User>(user, HttpStatus.CREATED);
 		}catch(Exception e){
 			response = new ResponseEntity<String>("Error in createUser  " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-			logger.error("Error in createUser  " + e.getMessage(), e);
+			logger.error("Error in createUser -  " + e.getMessage(), e);
 		}
 		
 		return response;
@@ -859,7 +860,9 @@ public class UserManagementController {
 						usernameList.remove(jObj.getString("circlememberUsername"));
 						
 						sysUser.getCircleUsersInfo().remove(i);
-						sysUser.getCircleUsersInfo().add(circle);
+						if(usernameList.size() > 0) {//add back the circle category only if any user exist in it
+							sysUser.getCircleUsersInfo().add(circle);
+						}
 						removed = true;
 						break;
 					}

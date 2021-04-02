@@ -1,9 +1,10 @@
-package com.jpw.springboot.notification.service;
+package com.jpw.springboot.service;
 
 
 import com.jpw.springboot.model.Notification;
 import com.jpw.springboot.model.Post;
-import com.jpw.springboot.notification.repository.NotificationRepository;
+import com.jpw.springboot.repositories.NotificationRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
