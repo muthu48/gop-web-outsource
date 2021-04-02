@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.jpw.springboot.model.Notification;
+import com.jpw.springboot.notification.service.NotificationPollingService;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -66,6 +68,9 @@ public class PostManagementController {
 	
 	@Autowired
 	GridFsTemplate gridFsTemplate;
+
+	@Autowired
+	NotificationPollingService notificationPollingService;
 	
 	//GET ALL POSTS FROM THE SYSTEM
 	//SHOULD NOT BE USED, ONLY FOR INTERNAL USE
@@ -412,6 +417,11 @@ public class PostManagementController {
 			}
 			
 			post = postService.createPost(post);
+
+			//TODO: Generate a notification and send it to the followers
+			notificationPollingService.createNotification(post);
+
+
 			if (file != null) {
 				String fileName = StringUtils.cleanPath(file.getOriginalFilename());
 				inputStream = file.getInputStream();
