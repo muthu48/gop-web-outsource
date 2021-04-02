@@ -24,7 +24,7 @@ public interface PostService {
 
 	public List<Post> findAllPosts() throws Exception;
 	public List<Post> findPosts(String entityId) throws Exception;
-	public List<Post> findPosts(String entityId, int pageNumber) throws Exception;
+	public List<Post> findPosts(String entityId, int pageNumber, boolean includeMyPosts) throws Exception;
 	public List<Post> findPosts(String parentPostId, int commentlevel, int pageNumber) throws Exception;
 	//boolean isPostExist(Post post);
 	public List<Post> findMyPosts(String entityId) throws Exception;

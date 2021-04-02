@@ -1,5 +1,6 @@
 package com.jpw.springboot.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,11 +90,19 @@ public class PostServiceImpl implements PostService {
 		return posts; 
 	}
 
-	public List<Post> findPosts(String entityId, int pageNumber) throws Exception{		
+	public List<Post> findPosts(String entityId, int pageNumber, boolean includeMyPosts) throws Exception{		
 
 		//select targetEntityid from connection where sourceEntityid = entity_id and status = accepted
 		List<String> connectionsIdList = socialService.getConnectionsEntityId(entityId, SystemConstants.FOLLOWING_CONNECTION);
-
+		
+		if(includeMyPosts) {
+			if(connectionsIdList == null) {
+				connectionsIdList = new ArrayList<String>();
+			}
+			
+			connectionsIdList.add(entityId);
+		}
+		
 		//Sort sort = new Sort(Sort.Direction.DESC, "lastModifiedDate");
 		Pageable pageRequest = PageRequest.of(pageNumber, SystemConstants.POST_PAGINATION_SIZE, Sort.by(Sort.Direction.DESC, "lastModifiedDate"));
 		//TODO		
