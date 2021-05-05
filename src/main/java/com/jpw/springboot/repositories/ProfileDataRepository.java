@@ -15,5 +15,5 @@ public interface ProfileDataRepository extends MongoRepository<ProfileData, Stri
 	//ProfileData findByEntityId(String entityId);
 	List<ProfileData> findByEntityId(String entityId);
 	List<ProfileData> findByEntityIdAndProfileTemplateId(String entityId, String profileTemplateId);
-	
+	List<ProfileData> findByEntityIdAndProfileTemplateIdAndCurrent(String entityId, String profileTemplateId, boolean current);
 }

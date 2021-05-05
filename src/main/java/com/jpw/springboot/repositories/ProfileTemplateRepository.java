@@ -15,12 +15,12 @@ public interface ProfileTemplateRepository extends MongoRepository<ProfileTempla
 	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId);
     
 	@Query("{'profileTemplateId':?0, 'type':?1}")
-	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId, String type);
+	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId, String category);
     
     List<ProfileTemplate> findByProfileTemplateIdIn(List<String> profileTemplateIds);
     
-    List<ProfileTemplate> findByProfileTemplateIdInAndType(List<String> profileTemplateIds, String type);
-	
+    List<ProfileTemplate> findByProfileTemplateIdInAndCategory(List<String> profileTemplateIds, String category);
+    List<ProfileTemplate> findByCategory(String category);	
     List<ProfileTemplate> findByType(String type);	
-
+    List<ProfileTemplate> findByCategoryAndType(String category, String type);
 }

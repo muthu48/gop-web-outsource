@@ -12,7 +12,7 @@ public class Notification extends AbstractModel {
 	private String source; 
 	private String target;
 	private String[] otherTargets;
-	private String type; // email, chat, follow, feeds, etc
+	private String type; // email, chat, follow, NEWS, etc
 	private String message;
 
 	@Override

@@ -32,7 +32,6 @@ public interface UserService {
 
 	boolean isUserExist(User user) throws Exception;
 	boolean isUserExist(UserProfile user) throws Exception;
-	public ProfileData createProfileData(User user) throws Exception;
 	public ProfileData createProfileData(ProfileData profileData);
 	public ProfileData createBioData(ProfileData profileData) throws Exception;
 	public ProfileData saveProfileData(ProfileData profileData) throws Exception;

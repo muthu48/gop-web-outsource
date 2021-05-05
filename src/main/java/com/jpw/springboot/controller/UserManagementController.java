@@ -236,7 +236,7 @@ public class UserManagementController {
 		String profileName = "upDefault";
 
 		try{
-			User user = userService.getUser(userName);
+			//User user = userService.getUser(userName);
 			/*
 			 * if(user != null &&
 			 * user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS)) {
@@ -420,24 +420,61 @@ public class UserManagementController {
 
 	}
 
+	/* load data from data/Openstates/pa/legislators
+	 * insert record into legislatoropenstate entity
+	 * insert 3 records into ProfileData entity
+	 * with ProfileTemplateId-upCongressLegislatorExternal, upRole, upOffices / EntityType-LEGISLATOROPENSTATE, leg_id as user/username
+	 * */
+	@RequestMapping(value = "/legis/loadStateLegislatorsToDb", method = RequestMethod.POST)	
+	public ResponseEntity loadStateLegislatorsToDb() {
+		//String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Openstates";
+		String filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\people\\testdata";
+		//logger.info("loadStateLegislatorsToDb data/Openstates/pa/legislators");
+		logger.info("loadStateLegislatorsToDb " + filePath);
+		ResponseEntity response = null;
+		try {
+			//legislatorDataProcessingService.loadStateLegislatorsToDb("data/Openstates/pa/legislators");
+			legislatorDataProcessingService.loadStateLegislatorsToDb(filePath);
+			response = new ResponseEntity("data loaded successfully", HttpStatus.OK);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+
+	}
+
 	/* load data from data/congress/congress-legislators-govtrack/legislators-current.json
 	 * insert record into legislatorcongress entity
 	 * insert 3 records into ProfileData entity
 	 * with ProfileTemplateId-upCongressLegislatorExternal, upRole, upOffices / EntityType-LEGISLATORCONGRESS, id.bioguide as user/username
 	 * */
-	@RequestMapping(value = "/legis/loadCongressLegislatorsToDb", method = RequestMethod.POST)	
-	public ResponseEntity loadCongressLegislatorsToDb() {
-		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\legislators-current.json";
-		logger.info("loadCongressLegislatorsToDb " + filePath);
+	@RequestMapping(value = "/legis/loadCongressMembersToDb", method = RequestMethod.POST)	
+	public ResponseEntity loadCongressMembersToDb(@RequestParam (value = "loadHistoricalLegislators", required = false) String loadHistoricalLegislators,
+			@RequestParam (value = "loadExecutives", required = false) String loadExecutives) {
+		String filePath = null;//"C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\legislators-current.json";
+		logger.info("loadCongressMembersToDb " + filePath);
 
 		ResponseEntity response = null;
 		File file;
+		String userCategory = SystemConstants.USERTYPE_CONGRESSLEGIS;
 		try {
-			//file = new ClassPathResource("data/congress/congress-legislators-govtrack/legislators-current.json").getFile();
+			
+			if(loadExecutives != null && loadExecutives.equalsIgnoreCase("Y")) {
+				filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\executive.json";
+				userCategory = SystemConstants.USERTYPE_EXECUTIVE;
+			}else if(loadHistoricalLegislators != null && loadHistoricalLegislators.equalsIgnoreCase("Y")) {
+				filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\legislators-historical.json";				
+			}else {
+				filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\legislators-current.json";
+			}
+
 			file = new File(filePath);
 		    Instant start = Instant.now();
 		    
-			legislatorDataProcessingService.loadCongressLegislatorsToDb(file, SystemConstants.USERTYPE_CONGRESSLEGIS);	
+			legislatorDataProcessingService.loadCongressMembersToDb(file, userCategory);	
 		    
 			Instant finish = Instant.now();
 		    long timeElapsed = Duration.between(start, finish).toMillis();  //in millis
@@ -455,6 +492,7 @@ public class UserManagementController {
 
 	}
 	
+	//OBSOLETE
 	@RequestMapping(value = "/legis/loadCongressExecutivesToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadCongressExecutivesToDb() {
 		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\executive.json";
@@ -485,20 +523,83 @@ public class UserManagementController {
 
 	}
 	
-	/* load data from data/Openstates/pa/legislators
-	 * insert record into legislatoropenstate entity
-	 * insert 3 records into ProfileData entity
-	 * with ProfileTemplateId-upCongressLegislatorExternal, upRole, upOffices / EntityType-LEGISLATOROPENSTATE, leg_id as user/username
-	 * */
-	@RequestMapping(value = "/legis/loadStateLegislatorsToDb", method = RequestMethod.POST)	
-	public ResponseEntity loadStateLegislatorsToDb() {
-		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Openstates";
-		//logger.info("loadStateLegislatorsToDb data/Openstates/pa/legislators");
-		logger.info("loadStateLegislatorsToDb " + filePath);
+	@RequestMapping(value = "/legis/loadCongressCommitteeFileToDb", method = RequestMethod.POST)	
+	public ResponseEntity loadCongressCommitteeFileToDb() {
+		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\committees-current.yaml";
+		logger.info("loadCongressCommitteeFileToDb " + filePath);
+
 		ResponseEntity response = null;
+		File file;
 		try {
-			//legislatorDataProcessingService.loadStateLegislatorsToDb("data/Openstates/pa/legislators");
-			legislatorDataProcessingService.loadStateLegislatorsToDb(filePath);
+			//file = new ClassPathResource("data/congress/congress-legislators-govtrack/legislators-current.json").getFile();
+			file = new File(filePath);
+		    Instant start = Instant.now();
+		    
+			legislatorDataProcessingService.processCongressCommitteeFile(file);	
+		    
+			Instant finish = Instant.now();
+		    long timeElapsed = Duration.between(start, finish).toMillis();  //in millis
+	        long minutes = TimeUnit.MILLISECONDS.toMinutes(timeElapsed);
+	        System.out.format("%d Milliseconds = %d minutes\n", timeElapsed, minutes );
+			
+			response = new ResponseEntity("data loaded successfully", HttpStatus.OK);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+
+	}
+	
+	@RequestMapping(value = "/legis/loadCongressCommitteeMembershipFileToDb", method = RequestMethod.POST)	
+	public ResponseEntity loadCongressCommitteeMembershipFileToDb() {
+		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\committee-membership-current.yaml";
+		logger.info("loadCongressCommitteeMembershipFileToDb " + filePath);
+
+		ResponseEntity response = null;
+		File file;
+		try {
+			file = new File(filePath);
+		    Instant start = Instant.now();
+		    
+			legislatorDataProcessingService.processCongressCommitteeMembershipFile(file);	
+		    
+			Instant finish = Instant.now();
+		    long timeElapsed = Duration.between(start, finish).toMillis();  //in millis
+	        long minutes = TimeUnit.MILLISECONDS.toMinutes(timeElapsed);
+	        System.out.format("%d Milliseconds = %d minutes\n", timeElapsed, minutes );
+			
+			response = new ResponseEntity("data loaded successfully", HttpStatus.OK);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			response = new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return response;
+
+	}
+	
+	@RequestMapping(value = "/legis/loadCongressDistrictOfficeFileToDb", method = RequestMethod.POST)	
+	public ResponseEntity loadCongressDistrictOfficeFileToDb() {
+		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\legislators-district-offices.json";
+		logger.info("loadCongressDistrictOfficeFileToDb " + filePath);
+
+		ResponseEntity response = null;
+		File file;
+		try {
+			file = new File(filePath);
+		    Instant start = Instant.now();
+		    
+			legislatorDataProcessingService.processCongressDistrictOfficeFile(file);	
+		    
+			Instant finish = Instant.now();
+		    long timeElapsed = Duration.between(start, finish).toMillis();  //in millis
+	        long minutes = TimeUnit.MILLISECONDS.toMinutes(timeElapsed);
+	        System.out.format("%d Milliseconds = %d minutes\n", timeElapsed, minutes );
+			
 			response = new ResponseEntity("data loaded successfully", HttpStatus.OK);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -594,7 +695,7 @@ public class UserManagementController {
 		currentUser.setUserType(user.getUserType());
 		currentUser.setSourceSystem(user.getSourceSystem());
 		currentUser.setStatus(user.getStatus());
-		currentUser.setEmailId(user.getEmailId());
+		//currentUser.setEmailId(user.getEmailId());
 		
 		userService.updateUser(currentUser);
 		return new ResponseEntity<User>(currentUser, HttpStatus.OK);

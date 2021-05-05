@@ -2,6 +2,7 @@ package com.jpw.springboot.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +27,13 @@ public class User extends AbstractModel {
 	//field will be indexed with a constraint of unique
 	
 	private String full_name;//Display name
+	private String description;
 	private String password;//[applicable only for PUBLICUSER/LEGISLATOR]
+	
+	//BROADER GROUP OF USER SUCH AS EXECUTIVE, LEGISLATOR
+	private String category;//SystemConstants - LEGISLATURE, EXECUTIVE, MUNICIPALITIES, RETIRED, PUBLICUSER, LEGISLATIVE DISTRICT, POLITICAL PARTY, CONGRESS COMMITTEE,CONGRESS SUB COMMITTEE 
+	
+	//USER TYPE => ROLE
 	private String userType;//SystemConstants - LEGISLATOR, PUBLICUSER, LEGISLATIVE_DISTRICT, POLITICAL_PARTY
 	//private String[] roles;//createprofile, deleteprofile, deleteprofiletemplate
 	private String status = "active"; //active
@@ -43,13 +50,7 @@ public class User extends AbstractModel {
 	private boolean isSelfProfile = false;
 	@Transient
 	private boolean isProfileManaged = false;
-	
-	//shall be part of UserProfile - upCongressLegislatorDefault / upDefault
-	private String firstName;
-	private String lastName;
-	private String emailId;
-	private String phone;
-	private String address;
+
 	
 	private String photoUrl;
 	private String profileAvatarImgFileId;//for profile image
@@ -59,6 +60,7 @@ public class User extends AbstractModel {
 	//shall be part of UserProfile - upCongressLegislatorDefault
 	private String sourceSystem; //GOVTRACK/OPENSTATE
 	private String sourceId;	
+	private String parentId;	
 	
 	private Enum tagName;
 	@Transient
@@ -77,7 +79,11 @@ public class User extends AbstractModel {
 	//@DBRef
 	@Transient	
 	private List<ProfileData> profileDatas = new ArrayList<ProfileData>();
-
+	@Transient	//USED AS A DTO FOR UI
+	private BasicDBObject biodata = null;
+	@Transient	//USED AS A DTO FOR UI
+	private BasicDBObject role = null;
+	
 	//private LegislatorOpenState legislatorOpenState;	
 	
 	/**
@@ -117,36 +123,14 @@ public class User extends AbstractModel {
 		this.sourceId = sourceId;
 	}
 
-/*	*//**
-	 * @return the userName
-	 *//*
-	public String getUserName() {
-		return userName;
+	public String getParentId() {
+		return parentId;
 	}
 
-	*//**
-	 * @param userName
-	 *            the userName to set
-	 *//*
-	public void setUserName(String userName) {
-		this.userName = userName;
-	}
-*/
-/*	*//**
-	 * @return the userPassword
-	 *//*
-	public String getUserPassword() {
-		return userPassword;
+	public void setParentId(String parentId) {
+		this.parentId = parentId;
 	}
 
-	*//**
-	 * @param userPassword
-	 *            the userPassword to set
-	 *//*
-	public void setUserPassword(String userPassword) {
-		this.userPassword = userPassword;
-	}
-*/
 	/**
 	 * @return the userType
 	 */
@@ -184,7 +168,15 @@ public class User extends AbstractModel {
 	public void setFull_name(String full_name) {
 		this.full_name = full_name;
 	}
+	
+	public String getDisplayName() {
+		return full_name;
+	}
 
+	public void setDisplayName(String displayName) {
+		this.full_name = displayName;
+	}
+	
 	public ArrayList<String> getMembers() {
 		return members;
 	}
@@ -264,20 +256,14 @@ public class User extends AbstractModel {
 		this.sourceSystem = sourceSystem;
 	}
 
-	public String getEmailId() {
-		return emailId;
+	
+
+	public String getDescription() {
+		return description;
 	}
 
-	public void setEmailId(String emailId) {
-		this.emailId = emailId;
-	}
-
-	public String getPhone() {
-		return phone;
-	}
-
-	public void setPhone(String phone) {
-		this.phone = phone;
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	public List<ProfileData> getProfileDatas() {
@@ -287,14 +273,6 @@ public class User extends AbstractModel {
 	public void setProfileDatas(List<ProfileData> profileDatas) {
 		this.profileDatas = profileDatas;
 	}
-
-/*	public ProfileData getProfileData() {
-		return profileData;
-	}
-
-	public void setProfileData(ProfileData profileData) {
-		this.profileData = profileData;
-	}*/
 
 	public String getUsername() {
 		return username;
@@ -312,6 +290,14 @@ public class User extends AbstractModel {
 		this.password = password;
 	}
 
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
+
 	public List<Connection> getConnections() {
 		return connections;
 	}
@@ -320,44 +306,12 @@ public class User extends AbstractModel {
 		this.connections = connections;
 	}
 
-/*	public UserProfile getUserProfile() {
-		return userProfile;
-	}
-
-	public void setUserProfile(UserProfile userProfile) {
-		this.userProfile = userProfile;
-	}
-*/
 	public List<ProfileTemplate> getProfileTemplates() {
 		return profileTemplates;
 	}
 
 	public void setProfileTemplates(List<ProfileTemplate> profileTemplates) {
 		this.profileTemplates = profileTemplates;
-	}
-
-	public String getFirstName() {
-		return firstName;
-	}
-
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
-
-	public String getLastName() {
-		return lastName;
-	}
-
-	public void setLastName(String lastName) {
-		this.lastName = lastName;
-	}
-
-	public String getAddress() {
-		return address;
-	}
-
-	public void setAddress(String address) {
-		this.address = address;
 	}
 
 	public String getPhotoUrl() {
@@ -384,14 +338,6 @@ public class User extends AbstractModel {
 		this.profileBannerImgFileId = profileBannerImgFileId;
 	}
 
-	public String getDisplayName() {
-		return full_name;
-	}
-
-	public void setDisplayName(String displayName) {
-		this.full_name = displayName;
-	}
-
 	public ArrayList<String> getProfileManagedBy() {
 		return profileManagedBy;
 	}
@@ -399,5 +345,23 @@ public class User extends AbstractModel {
 	public void setProfileManagedBy(ArrayList<String> profileManagedBy) {
 		this.profileManagedBy = profileManagedBy;
 	}
+
+	public BasicDBObject getBiodata() {
+		return biodata;
+	}
+
+	public void setBiodata(BasicDBObject biodata) {
+		this.biodata = biodata;
+	}
+
+	public BasicDBObject getRole() {
+		return role;
+	}
+
+	public void setRole(BasicDBObject role) {
+		this.role = role;
+	}
+
+	
 
 }

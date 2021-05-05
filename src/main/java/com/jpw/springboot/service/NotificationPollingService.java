@@ -4,11 +4,14 @@ package com.jpw.springboot.service;
 import com.jpw.springboot.model.Notification;
 import com.jpw.springboot.model.Post;
 import com.jpw.springboot.repositories.NotificationRepository;
+import com.jpw.springboot.util.SystemConstants;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import javax.transaction.Transactional;
 
@@ -21,24 +24,28 @@ public class NotificationPollingService {
 
     @Autowired
     SimpMessagingTemplate simpMessagingTemplate;
-
+	
+    @Autowired
+    SocialService socialService;
+	
     public void createNotification(Post post) {
-
-        Notification notification;
-        String[] targets = post.getTaggedEntityId();
-
-        //notificationRepository.save(new Notification(post.getUserId(),targets,"NEW",post.getPostText()));
-
-        // creating notifications for each of the followers and storing in db
-        for (String target : targets) {
-            notification = notificationRepository.save(new Notification(post.getUserId(), target, "NEW", post.getPostText()));
-
-            //TODO: post the notification to respective user
-            try {
-                sendSpecific(notification);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        try {
+	        Notification notification;
+	        List<String> targets = socialService.getConnectionsEntityId(post.getUserId(), SystemConstants.FOLLOWING_CONNECTION);//post.getTaggedEntityId();
+	
+	        //notificationRepository.save(new Notification(post.getUserId(),targets,"NEW",post.getPostText()));
+	
+	        // creating notifications for each of the followers and storing in db
+	        for (String target : targets) {
+	            notification = notificationRepository.save(new Notification(post.getUserId(), target, "NEWS", post.getPostText()));
+	
+	            //TODO: post the notification to respective user
+	
+	            sendSpecific(notification);
+	            
+	        }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

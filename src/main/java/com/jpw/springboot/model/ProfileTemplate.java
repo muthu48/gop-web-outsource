@@ -14,7 +14,8 @@ public class ProfileTemplate extends AbstractModel{
 	@Id	
 	private String id;	
 	private String profileTemplateId; // STATIC ID
-	private String type; // LEGISLATOR / PUBLIC
+	private String category; 
+	private String type; 
 	private String name;//DISPLAY NAME
 	private String profileIcon; //UI ICON FOR THE PROFILE
 	private ArrayList<BasicDBObject> properties;
@@ -35,6 +36,14 @@ public class ProfileTemplate extends AbstractModel{
 		this.profileTemplateId = profileTemplateId;
 	}
 
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
 
 	/**
 	 * @return the type

@@ -1,14 +1,41 @@
 package com.jpw.springboot.util;
 
 public class SystemConstants {
-	//USER/ENTITY TYPE
-	public final static String USERTYPE_PUBLIC = "PUBLICUSER";
-	public final static String USERTYPE_LEGIS = "LEGISLATOR";
-	public final static String USERTYPE_STATELEGIS = "LEGISLATOR";
-	public final static String USERTYPE_CONGRESSLEGIS = "LEGISLATORCONGRESS";	
-	public final static String USERTYPE_EXECUTIVE = "LEGISLATOREXECUTIVE";
-	public final static String USERTYPE_LEGISLATIVE_DISTRICT = "LEGISLATIVE_DISTRICT";
-	public final static String USERTYPE_POLITICAL_PARTY = "POLITICAL_PARTY";
+	
+	////USER CATEGORY
+	public final static String USERTYPE_PUBLIC = "USER";
+	public final static String USERTYPE_LEGIS = "LEGISLATOR";//OBSOLETE
+	public final static String USERTYPE_STATELEGIS = "LEGISLATOR";//OBSOLETE
+	public final static String USERTYPE_CONGRESSLEGIS = "CONGRESS LEGISLATOR";	
+	public final static String USERTYPE_EXECUTIVE = "EXECUTIVE"; //roles includes governor, mayor, secretary of state, chief election officer
+	public final static String USERCATEGRORY_LEGISLATURE = "LEGISLATURE";
+	public final static String USERCATEGRORY_EXECUTIVE = "EXECUTIVE";
+	public final static String USERCATEGRORY_MUNICIPALITIES = "MUNICIPALITIES";
+	public final static String USERCATEGRORY_RETIRED = "RETIRED";
+	public final static String USERTYPE_LEGISLATIVE_DISTRICT = "LEGISLATIVE DISTRICT";
+	public final static String USERTYPE_POLITICAL_PARTY = "POLITICAL PARTY";
+	//public final static String USERCATEGRORY_COMMITTEE_CONGRESS = "Congress Committee";//OBSOLETE
+	public final static String USERCATEGRORY_SUBCOMMITTEE_LEGISLATIVE = "LEGISLATIVE SUB COMMITTEE";//OBSOLETE
+	public final static String USERCATEGRORY_COMMITTEE_LEGISLATIVE = "LEGISLATIVE COMMITTEE";
+	
+	
+	//GOVTRACK USER TYPES
+	//prez, viceprez, rep, sen
+	public final static String USERTYPE_GT_CONGRESS_PRESIDENT = "prez";
+	public final static String USERTYPE_GT_CONGRESS_VICEPRESIDENT = "viceprez";
+	public final static String USERTYPE_GT_CONGRESS_REP = "rep";
+	public final static String USERTYPE_GT_CONGRESS_SENATE = "sen";
+
+	//USER ROLES
+	public final static String USERTYPE_CONGRESS_PRESIDENT = "President";
+	public final static String USERTYPE_CONGRESS_VICEPRESIDENT = "Vice President";
+	public final static String USERTYPE_CONGRESS_REP = "U.S. Representative";
+	public final static String USERTYPE_CONGRESS_SENATOR = "U.S. Senator";
+	public final static String USERTYPE_HOUSE_REP = "House Representative"; //lower
+	public final static String USERTYPE_SENATOR = "Senator";//upper
+	public final static String USERTYPE_COMMITTEE_CONGRESS_HOUSE = "Congress House Committee";
+	public final static String USERTYPE_COMMITTEE_CONGRESS_SENATE = "Congress Senate Committee";
+	public final static String USERTYPE_COMMITTEE_CONGRESS_JOINT = "Congress Joint Committee";
 	
 	//LEGISLATOR SOURCE
 	public final static String OPENSTATE_LEGIS_SOURCE = "OPENSTATE";
@@ -36,6 +63,10 @@ public class SystemConstants {
 	public final static String PROFILE_TEMPLATE_ROLE = "upRole";
 	public final static String PROFILE_TEMPLATE_OFFICE = "upOffices";
 	public final static String PROFILE_TEMPLATE_COMMITTEE = "upCongressLegislatorCommitteeExternal";
+	public final static String PROFILE_TEMPLATE_VOTE = "upVote";
+	public final static String PROFILE_TEMPLATE_EVENT = "upEvent";
+	public final static String PROFILE_TEMPLATE_MEMBER = "upMember";
+	public final static String PROFILE_TEMPLATE_BILL = "upBill";
 	
 	//READ PAGINATION
 	public final static int POST_PAGINATION_SIZE = 5;
