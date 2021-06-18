@@ -235,7 +235,7 @@ public class SocialController {
 		try {
 			//TODO
 			//BASED ON ENTITY TYPE, SHOULD DECIDE USER OR OTHER ENTITY LIKE DISTRICT, PARTY
-			targetUser = userService.getUser(connection.getTargetEntityId());
+			targetUser = userService.getUser(connection.getTargetEntityId(), false);
 			if(targetUser.getStatus().equalsIgnoreCase(SystemConstants.PASSIVE_USER)){
 				connection.setStatus(SystemConstants.FOLLOWING_CONNECTION);
 			}

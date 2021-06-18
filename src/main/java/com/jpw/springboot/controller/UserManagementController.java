@@ -128,7 +128,7 @@ public class UserManagementController {
 		ResponseEntity response = null;
 		User user = null;
 		try{
-			user = userService.getUser(userName);
+			user = userService.getUser(userName, false);
 			
 			if(requestorId != null){
 				if(requestorId.equalsIgnoreCase(userName)){
@@ -160,7 +160,7 @@ public class UserManagementController {
 		ResponseEntity response = null;
 		User user = null;
 		try{
-			user = userService.getUser(userName);
+			user = userService.getUser(userName, false);
 			response = new ResponseEntity<User>(user, HttpStatus.OK);
 
 		}catch(Exception e){
@@ -178,7 +178,7 @@ public class UserManagementController {
 		ResponseEntity response = null;
 		User user = null;
 		try{
-			user = userService.getUser(userName);
+			user = userService.getUser(userName, false);
 			response = new ResponseEntity<User>(user, HttpStatus.OK);
 
 		}catch(Exception e){
@@ -428,7 +428,8 @@ public class UserManagementController {
 	@RequestMapping(value = "/legis/loadStateLegislatorsToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadStateLegislatorsToDb() {
 		//String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Openstates";
-		String filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\people\\testdata";
+		//String filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\people\\testdata";
+		String filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\people\\data";
 		//logger.info("loadStateLegislatorsToDb data/Openstates/pa/legislators");
 		logger.info("loadStateLegislatorsToDb " + filePath);
 		ResponseEntity response = null;
@@ -459,16 +460,16 @@ public class UserManagementController {
 
 		ResponseEntity response = null;
 		File file;
-		String userCategory = SystemConstants.USERTYPE_CONGRESSLEGIS;
+		String userCategory = SystemConstants.USERCATEGRORY_LEGISLATURE;//SystemConstants.USERTYPE_CONGRESSLEGIS;
 		try {
 			
 			if(loadExecutives != null && loadExecutives.equalsIgnoreCase("Y")) {
-				filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\executive.json";
+				filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\congress-legislators\\executive.json";
 				userCategory = SystemConstants.USERTYPE_EXECUTIVE;
 			}else if(loadHistoricalLegislators != null && loadHistoricalLegislators.equalsIgnoreCase("Y")) {
-				filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\legislators-historical.json";				
+				filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\congress-legislators\\legislators-historical.json";				
 			}else {
-				filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\legislators-current.json";
+				filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\congress-legislators\\legislators-current.json";
 			}
 
 			file = new File(filePath);
@@ -525,7 +526,7 @@ public class UserManagementController {
 	
 	@RequestMapping(value = "/legis/loadCongressCommitteeFileToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadCongressCommitteeFileToDb() {
-		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\committees-current.yaml";
+		String filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\congress-legislators\\committees-current.yaml";
 		logger.info("loadCongressCommitteeFileToDb " + filePath);
 
 		ResponseEntity response = null;
@@ -555,7 +556,7 @@ public class UserManagementController {
 	
 	@RequestMapping(value = "/legis/loadCongressCommitteeMembershipFileToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadCongressCommitteeMembershipFileToDb() {
-		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\committee-membership-current.yaml";
+		String filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\congress-legislators\\committee-membership-current.yaml";
 		logger.info("loadCongressCommitteeMembershipFileToDb " + filePath);
 
 		ResponseEntity response = null;
@@ -584,7 +585,7 @@ public class UserManagementController {
 	
 	@RequestMapping(value = "/legis/loadCongressDistrictOfficeFileToDb", method = RequestMethod.POST)	
 	public ResponseEntity loadCongressDistrictOfficeFileToDb() {
-		String filePath = "C:\\Users\\SKYDOTS\\Dropbox\\Project\\Data\\Congress\\congress-legislators-govtrack\\asof-02-09-2021\\legislators-district-offices.json";
+		String filePath = "C:\\Users\\SKYDOTS\\Project-Workspace\\congress-legislators\\legislators-district-offices.json";
 		logger.info("loadCongressDistrictOfficeFileToDb " + filePath);
 
 		ResponseEntity response = null;
@@ -617,20 +618,20 @@ public class UserManagementController {
 		logger.info("Creating User : {}", user);
 		ResponseEntity response = null;
 		try{
-		if(user.getUserType() == null){
-			user.setUserType(SystemConstants.USERTYPE_PUBLIC);
-		}
+			if(user.getCategory() == null){
+				user.setCategory(SystemConstants.USERTYPE_PUBLIC);
+			}
+	
+			if(user.getStatus().equalsIgnoreCase(SystemConstants.ACTIVE)){// && (user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC) || user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS))){
+				user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+			}
+			
+			user = userService.createUser(user);
 
-		if(user.getStatus().equalsIgnoreCase(SystemConstants.ACTIVE) && (user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC) || user.getUserType().equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS))){
-			user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-		}
-		
-		user = userService.createUser(user);
-
-		response = new ResponseEntity<User>(user, HttpStatus.CREATED);
+			response = new ResponseEntity<User>(user, HttpStatus.CREATED);
 		}catch(Exception e){
 			response = new ResponseEntity<String>("Error in createUser  " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-			logger.error("Error in createUser -  " + e.getMessage(), e);
+			logger.error("Error - " + e.getMessage(), e);
 		}
 		
 		return response;
@@ -677,7 +678,7 @@ public class UserManagementController {
 		return response;
 	}
 	
-
+	//OBSOLETE
 	@RequestMapping(value = "/{id}", method = RequestMethod.PUT)
 	public ResponseEntity<?> updateUser(@PathVariable("id") String id, @RequestBody User user) {
 		logger.info("Updating User with id {}", id);
@@ -789,7 +790,7 @@ public class UserManagementController {
 		ResponseEntity response = null;
 
 		try {
-			sysUser = userService.getUser(user.getUsername());
+			sysUser = userService.getUser(user.getUsername(), true);
 			
 			BasicDBObject jObj = user.getSettings();
 			
@@ -824,7 +825,7 @@ public class UserManagementController {
 		try {
 			logger.info("getSettings : " + entityId);
 
-			sysUser = userService.getUser(entityId);		
+			sysUser = userService.getUser(entityId, false);		
 			if(sysUser.getSettings() != null){
 				settings = sysUser.getSettings().toJson();
 			}
@@ -853,7 +854,7 @@ public class UserManagementController {
 			logger.info("addCircleUser : " + jObj.getString("circlememberUsername") + " to " + jObj.getString("username"));
 
 			sysUser = userService.getUser(jObj.getString("username"), true);
-			circleUser = userService.getUser(jObj.getString("circlememberUsername"));
+			circleUser = userService.getUser(jObj.getString("circlememberUsername"), false);
 			/*
 			if(sysUser.getCircleUsers() == null){
 				ArrayList<String> circleUsers = new ArrayList<String>(); 
@@ -939,8 +940,8 @@ public class UserManagementController {
 			jObj = new JSONObject(jsonStr);
 			logger.info("removeCircleUser : " + jObj.getString("circlememberUsername") + " from " + jObj.getString("username"));
 
-			sysUser = userService.getUser(jObj.getString("username"));
-			circleUser = userService.getUser(jObj.getString("circlememberUsername"));
+			sysUser = userService.getUser(jObj.getString("username"), true);
+			circleUser = userService.getUser(jObj.getString("circlememberUsername"), false);
 
 /*			if(sysUser.getCircleUsers() != null && sysUser.getCircleUsers().size() >0){
 				sysUser.getCircleUsers().remove(jObj.getString("circlememberUsername"));
@@ -1004,7 +1005,7 @@ public class UserManagementController {
 		try {
 			logger.info("getCircleUsers : " + entityId);
 
-			sysUser = userService.getUser(entityId);		
+			sysUser = userService.getUser(entityId, false);		
 			circleUsers = sysUser.getCircleUsersInfo();
 
 			response = new ResponseEntity(circleUsers, HttpStatus.OK);
@@ -1027,7 +1028,7 @@ public class UserManagementController {
 		try {
 			logger.info("isInCircle : " + profileId + " , " + entityId);
 
-			sysUser = userService.getUser(entityId);		
+			sysUser = userService.getUser(entityId, false);		
 			
 			ArrayList<BasicDBObject> circleUsers = sysUser.getCircleUsersInfo();
 			
@@ -1115,7 +1116,7 @@ public class UserManagementController {
 			jObj = new JSONObject(jsonStr);
 			logger.info("removeMember : " + jObj.getString("memberUsername") + " from " + jObj.getString("username"));
 
-			sysUser = userService.getUser(jObj.getString("username"));
+			sysUser = userService.getUser(jObj.getString("username"), true);
 			if(sysUser.getMembers() != null && sysUser.getMembers().size() > 0){
 				sysUser.getMembers().remove(jObj.getString("memberUsername"));
 			}else{
@@ -1145,7 +1146,7 @@ public class UserManagementController {
 		try {
 			logger.info("getCircleUsers : " + entityId);
 
-			sysUser = userService.getUser(entityId);		
+			sysUser = userService.getUser(entityId, false);		
 			managedByUsers = sysUser.getMembers();
 
 			response = new ResponseEntity(managedByUsers, HttpStatus.OK);
@@ -1235,7 +1236,7 @@ public class UserManagementController {
 		try {
 			logger.info("isProfileEditable: profile-> " + profileId + " , " + entityId);
 			if(entityId != null){
-				sysUser = userService.getUser(profileId);		
+				sysUser = userService.getUser(profileId, false);		
 				if(SystemConstants.PASSIVE_USER.equalsIgnoreCase(sysUser.getStatus()) || (sysUser.getMembers() != null  && sysUser.getMembers().contains(entityId))){
 					profileEditable = true;
 				}

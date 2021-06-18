@@ -4,7 +4,7 @@
 
 	<groupId>com.gpx.services</groupId>
 	<artifactId>gpx-services</artifactId>
-	<version>1.0.0-05052021</version>
+	<version>1.0.0-06182021</version>
 	<packaging>jar</packaging>
 
 	<name>gpx-services</name>

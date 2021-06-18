@@ -14,12 +14,13 @@ public interface ProfileTemplateRepository extends MongoRepository<ProfileTempla
 	ProfileTemplate findByName(String name);
 	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId);
     
-	@Query("{'profileTemplateId':?0, 'type':?1}")
+	@Query("{'profileTemplateId':?0, 'category':?1}")
 	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId, String category);
-    
-    List<ProfileTemplate> findByProfileTemplateIdIn(List<String> profileTemplateIds);
-    
+	//same as findByProfileTemplateId
+    List<ProfileTemplate> findByProfileTemplateIdAndCategory(String profileTemplateId, String category);
+   
     List<ProfileTemplate> findByProfileTemplateIdInAndCategory(List<String> profileTemplateIds, String category);
+    List<ProfileTemplate> findByProfileTemplateIdIn(List<String> profileTemplateIds);
     List<ProfileTemplate> findByCategory(String category);	
     List<ProfileTemplate> findByType(String type);	
     List<ProfileTemplate> findByCategoryAndType(String category, String type);

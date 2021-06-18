@@ -22,9 +22,9 @@ public interface ProfileTemplateService {
 
 	List<ProfileTemplate> findAllProfileTemplates();
 	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId);
-	List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId, String type);
+	List<ProfileTemplate> findByProfileTemplateIdAndCategory(String profileTemplateId, String type);
 	List<ProfileTemplate> findAllProfileTemplatesByIds(List<String> profileTemplateIds);
 	List<ProfileTemplate> findAllProfileTemplatesByIds(List<String> profileTemplateIds, String type);
-	List<ProfileTemplate> findAllByType(String type);
+	List<ProfileTemplate> findAllByCategory(String category);
 	boolean isProfileTemplateExist(ProfileTemplate profileTemplate);
 }

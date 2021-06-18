@@ -38,12 +38,13 @@ public class ProfileManagementController {
 	
 	@Autowired
 	UserService userService;
-	
+	//list all the templates for a category
+	//if no category is supplied, then list all the templates
 	@RequestMapping(value = "/template/getAllProfileTemplates", method = RequestMethod.GET)
-	public ResponseEntity<List<ProfileTemplate>> listAllProfileTemplates(@RequestParam (value = "userType", required = false) String userType) {
+	public ResponseEntity<List<ProfileTemplate>> listAllProfileTemplates(@RequestParam (value = "category", required = false) String category) {
 		List<ProfileTemplate> profiletemplates = null;
-		if(userType != null){
-			profiletemplates = profileTemplateService.findAllByType(userType);
+		if(category != null){
+			profiletemplates = profileTemplateService.findAllByCategory(category);
 			List<ProfileTemplate> profileTemplatesNoBio = new ArrayList<ProfileTemplate>(); 
 			//IGNORING BIODATA TEMPLATE DATA AS UI SHOWS BIODATA SEPARATELY 
 			for(ProfileTemplate profiletemplate:profiletemplates){
@@ -63,11 +64,12 @@ public class ProfileManagementController {
 		return new ResponseEntity<List<ProfileTemplate>>(profiletemplates, HttpStatus.OK);
 	}
 
+	//list the templates that are available to use, ignores the one that are already used
 	@RequestMapping(value = "/template/getAllProfileTemplates/{entityId}/", method = RequestMethod.GET)
-	public ResponseEntity<List<ProfileTemplate>> listEntityProfileTemplates(@PathVariable("entityId") String entityId, @RequestParam (value = "userType", required = false) String userType) {
+	public ResponseEntity<List<ProfileTemplate>> listEntityProfileTemplates(@PathVariable("entityId") String entityId, @RequestParam (value = "category", required = false) String category) {
 		List<ProfileTemplate> profiletemplates = null;
-		if(userType != null){
-			profiletemplates = profileTemplateService.findAllByType(userType);
+		if(category != null){
+			profiletemplates = profileTemplateService.findAllByCategory(category);
 			
 			//get profiledata
 			List<ProfileData> profileDatas = userService.getProfileDatas(entityId);
@@ -85,7 +87,7 @@ public class ProfileManagementController {
 				}
 				
 				//IGNORING BIODATA TEMPLATE DATA for LEGISLATOR AS UI SHOWS BIODATA SEPARATELY	
-				if(!templateExist && !(userType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) && (profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA) ||
+				if(!templateExist && !(category.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) && (profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA) ||
 						profiletemplate.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA)))){
 					profileTemplatesNoBio.add(profiletemplate);
 				}
@@ -104,14 +106,14 @@ public class ProfileManagementController {
 
 	@RequestMapping(value = "/template/getProfileTemplate/{profileTemplateId}", method = RequestMethod.GET)
 	public ResponseEntity<?> listProfileTemplate(@PathVariable("profileTemplateId") String profileTemplateId,
-			@RequestParam (value = "type", required = false) String type) {
+			@RequestParam (value = "category", required = false) String category) {
 		List<ProfileTemplate> profiletemplates = null;
 		ProfileTemplate profiletemplate = null;
 		
-		if(StringUtils.isEmpty(type)){
+		if(StringUtils.isEmpty(category)){
 			profiletemplates = profileTemplateService.findByProfileTemplateId(profileTemplateId);						
 		}else{
-			profiletemplates = profileTemplateService.findByProfileTemplateId(profileTemplateId, type);						
+			profiletemplates = profileTemplateService.findByProfileTemplateIdAndCategory(profileTemplateId, category);						
 
 		}
 

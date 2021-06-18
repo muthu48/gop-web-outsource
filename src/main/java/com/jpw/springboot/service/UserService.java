@@ -15,7 +15,7 @@ public interface UserService {
 	
 	User findById(String id);
 	public User findByUserName(String name, boolean pwdRequired) throws Exception;
-	User getUser(String name, boolean... pwdRequired) throws Exception;
+	User getUser(String name, boolean pwdRequired) throws Exception;
 	LegislatorOpenState findLegislator(String name);
 	public LegislatorCongressGT findLegislatorCongress(String name);
 	public LegislatorCongressGT findLegislatorCongressByBioguide(String name);
@@ -33,7 +33,6 @@ public interface UserService {
 	boolean isUserExist(User user) throws Exception;
 	boolean isUserExist(UserProfile user) throws Exception;
 	public ProfileData createProfileData(ProfileData profileData);
-	public ProfileData createBioData(ProfileData profileData) throws Exception;
 	public ProfileData saveProfileData(ProfileData profileData) throws Exception;
 	public List<ProfileData> getProfileDatas(String entityId);
 	public List<ProfileData> getProfileDataByProfileTemplateId(String entityId, String profileTemplateId);

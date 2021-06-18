@@ -11,6 +11,7 @@ public class SystemConstants {
 	public final static String USERCATEGRORY_LEGISLATURE = "LEGISLATURE";
 	public final static String USERCATEGRORY_EXECUTIVE = "EXECUTIVE";
 	public final static String USERCATEGRORY_MUNICIPALITIES = "MUNICIPALITIES";
+	public final static String USERCATEGRORY_GROUP = "GROUP";
 	public final static String USERCATEGRORY_RETIRED = "RETIRED";
 	public final static String USERTYPE_LEGISLATIVE_DISTRICT = "LEGISLATIVE DISTRICT";
 	public final static String USERTYPE_POLITICAL_PARTY = "POLITICAL PARTY";

@@ -52,8 +52,8 @@ public class ProfileTemplateServiceImpl implements ProfileTemplateService {
 		return profileTemplateRepository.findByProfileTemplateId(profileTemplateId);
 	}
 	
-	public List<ProfileTemplate> findByProfileTemplateId(String profileTemplateId, String category){
-		return profileTemplateRepository.findByProfileTemplateId(profileTemplateId, category);
+	public List<ProfileTemplate> findByProfileTemplateIdAndCategory(String profileTemplateId, String category){
+		return profileTemplateRepository.findByProfileTemplateIdAndCategory(profileTemplateId, category);
 	}
 	
 	public List<ProfileTemplate> findAllProfileTemplatesByIds(List<String> profileTemplateIds) {
@@ -64,8 +64,8 @@ public class ProfileTemplateServiceImpl implements ProfileTemplateService {
 		return profileTemplateRepository.findByProfileTemplateIdInAndCategory(profileTemplateIds, category);
 	}
 	
-	public List<ProfileTemplate> findAllByType(String type) {
-		return profileTemplateRepository.findByType(type);
+	public List<ProfileTemplate> findAllByCategory(String category) {
+		return profileTemplateRepository.findByCategory(category);
 	}	
 	
 	public boolean isProfileTemplateExist(ProfileTemplate pTemplate) {

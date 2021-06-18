@@ -85,6 +85,7 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 	String userCategory = null;
 	String userType = null; //role
 
+	//OBSOLETE
 	@Override
 	public void loadCongressLegislatorsToDb(File file, String userType) throws Exception{
 		InputStream fis = null;
@@ -495,10 +496,10 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 			    	//upDefault / upCongressLegislatorExternal profileData
 			    	profileDataObj = new JSONObject();
 			    	if(!StringUtils.isEmpty(legislatorCongressGT.getName()) && !StringUtils.isEmpty(legislatorCongressGT.getName().getString("first")))
-			    		profileDataObj.put("first_name", legislatorCongressGT.getName().getString("first"));
+			    		profileDataObj.put("firstName", legislatorCongressGT.getName().getString("first"));
 			    	
 			    	if(!StringUtils.isEmpty(legislatorCongressGT.getName()) && !StringUtils.isEmpty(legislatorCongressGT.getName().getString("last")))
-			    		profileDataObj.put("last_name", legislatorCongressGT.getName().getString("last"));
+			    		profileDataObj.put("lastName", legislatorCongressGT.getName().getString("last"));
 			    	
 			    	
 			    	if(!StringUtils.isEmpty(legislatorCongressGT.getBio())){
@@ -860,8 +861,10 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 			ProfileData latestProfileData = null;
 			ProfileData profileData = new ProfileData();
 	    	User user = new User();
-
+	    	String entityId = null;
+	    	
 			try {
+				entityId = los2.getId().substring(11); //ocd-person/
 				legislatorOpenStateRepositoryV2.insert(los2);
 			}catch(Exception e){
 	    		System.out.println("Error in creating entry in legislatorOpenState " + e);
@@ -891,7 +894,7 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 					role = null;
 					district = null;
 					
-			    	profileData.setEntityId(los2.getName());
+			    	profileData.setEntityId(entityId);
 			    	
 			    	if(losRole.containsField("type")) {
 			    		String userRole = null; 
@@ -958,7 +961,7 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 	    	String sourceId = los2.getId();
 	    	BasicDBObject settings = new BasicDBObject();
     	
-	    	user.setUsername(los2.getName());
+	    	user.setUsername(entityId);
 	    	user.setSourceId(sourceId);
 	    	user.setCategory(userCategory);
 	    	user.setSourceSystem(SystemConstants.OPENSTATE_LEGIS_SOURCE);
@@ -994,7 +997,7 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 			    	}
 	
 			    	profileData = new ProfileData();
-			    	profileData.setEntityId(user.getUsername());
+			    	profileData.setEntityId(entityId);
 			    	profileData.setEntityType(user.getUserType());
 			    	profileData.setProfileTemplateId(SystemConstants.PROFILE_TEMPLATE_OFFICE);
 			    	profileData.setData(losOffice);
@@ -1015,7 +1018,7 @@ public class LegislatorDataProcessingServiceImpl implements LegislatorDataProces
 	    	
 	    	profileData = new ProfileData();
 	    	losBio = gson.fromJson(profileDataObj.toString(), BasicDBObject.class);
-	    	profileData.setEntityId(user.getUsername());
+	    	profileData.setEntityId(entityId);
 	    	profileData.setEntityType(user.getUserType());
 	    	profileData.setProfileTemplateId(SystemConstants.PROFILE_TEMPLATE_BIODATA);
 	    	profileData.setData(losBio);

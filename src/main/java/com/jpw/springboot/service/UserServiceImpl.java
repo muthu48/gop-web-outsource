@@ -123,16 +123,18 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return legislator;
 	}
 
-	public User getUser(String username, boolean... pwdsRequired) throws Exception {
+	public User getUser(String username, boolean pwdRequired) throws Exception {
 		List<String> profileTemplateIdsList = new ArrayList<String>();
-		String userType = null;
-		boolean pwdRequired = false;
-
-		if (pwdsRequired != null && pwdsRequired.length > 0)
-			pwdRequired = pwdsRequired[0];
+		String category = null;
+		/*
+		 * boolean pwdRequired = false;
+		 * 
+		 * if (pwdsRequired != null && pwdsRequired.length > 0) pwdRequired =
+		 * pwdsRequired[0];
+		 */
 
 		User user = findByUserName(username, pwdRequired);
-
+		category = user.getCategory().toUpperCase();
 		if (user == null) {
 			throw new Exception("User not found - " + username);
 
@@ -143,11 +145,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 			// List<ProfileData> profileDatasNoBio = new ArrayList<ProfileData>();
 			ProfileData latestRoleProfileData = null;
 			  for(ProfileData profileData:profileDatas){
-				  if(profileData.getEntityId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA)) {
+				  if(profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA)) {
 					  user.setBiodata(profileData.getData());
 				  }
 				  
-				  if(profileData.getEntityId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_ROLE)) {
+				  if(profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_ROLE)) {
 						//finding the latest role
 			    		if(latestRoleProfileData == null)
 				    		latestRoleProfileData = profileData;
@@ -180,26 +182,27 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 				    	}
 			    		
 				  }
+				  
+				  if(!profileTemplateIdsList.contains(profileData.getProfileTemplateId())){
+					  profileTemplateIdsList.add(profileData.getProfileTemplateId()); 
+				  }
+
 			  }
 			  
 			  if(latestRoleProfileData != null) {
 				 user.setRole(latestRoleProfileData.getData());
 			  }
-			 /* 
-			 * 
-			 * //IGNORING BIODATA TEMPLATE DATA for LEGISLATOR AS UI SHOWS BIODATA
-			 * SEPARATELY //ProfileManagementController::listEntityProfileTemplates -
-			 * Reference if(!(userType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS) &&
-			 * profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.
-			 * PROFILE_TEMPLATE_BIODATA))){ profileDatasNoBio.add(profileData);
-			 * 
-			 * if(!profileTemplateIdsList.contains(profileData.getProfileTemplateId())){
-			 * profileTemplateIdsList.add(profileData.getProfileTemplateId()); } }
-			 * if(!profileTemplateIdsList.contains(profileData.getProfileTemplateId())){
-			 * profileTemplateIdsList.add(profileData.getProfileTemplateId()); }
-			 * 
-			 * }
-			 */
+			  
+			  
+			  //IGNORING BIODATA TEMPLATE DATA for LEGISLATOR AS UI SHOWS BIODATA SEPARATELY 
+			  //ProfileManagementController::listEntityProfileTemplates - Reference 
+				/*
+				 * if(!(userType.equalsIgnoreCase(SystemConstants.USERCATEGRORY_LEGISLATURE) &&
+				 * profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.
+				 * PROFILE_TEMPLATE_BIODATA))){ profileDatasNoBio.add(profileData);
+				 */
+			  
+			 
 			// user.setProfileDatas(profileDatasNoBio);
 			user.setProfileDatas(profileDatas);
 
@@ -211,9 +214,9 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 			 * userType.equalsIgnoreCase(SystemConstants.USERTYPE_EXECUTIVE))) { userType =
 			 * SystemConstants.USERTYPE_LEGIS; }
 			 */
-			userType = user.getCategory();
+			
 			List<ProfileTemplate> profileTemplates = profileTemplateService
-					.findAllProfileTemplatesByIds(profileTemplateIdsList, userType);
+					.findAllProfileTemplatesByIds(profileTemplateIdsList, category);
 			user.setProfileTemplates(profileTemplates);
 
 		}
@@ -229,7 +232,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
 		User userLookup = userRepository.findByUsername(user.getUsername());
 		if (userLookup == null) {
+			
 			/*
+			 * String regex = "^[A-Za-z0-9+_.-]+@(.+)$"; //email
+			 * 
+			 * Pattern pattern = Pattern.compile(regex); Matcher matcher =
+			 * pattern.matcher(user.getUsername()); if(matcher.matches()) {
+			 * 
+			 * }
+			 * 
+			 */			/*
 			 * if(user.getProfileDatas() != null){ List<ProfileData> profileDatas = new
 			 * ArrayList<ProfileData>(); for(ProfileData profileData :
 			 * user.getProfileDatas()){ profileDatas.add(profileData); }
@@ -244,6 +256,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 				// List<ProfileData> profileDatas = new ArrayList<ProfileData>();
 				for (ProfileData profileData : user.getProfileDatas()) {
 					// profileDatas.add(profileDataRepository.insert(profileData));
+					if (profileData.getProfileTemplateId().equalsIgnoreCase(SystemConstants.PROFILE_TEMPLATE_BIODATA)) {
+						//if email or phone is used as username
+						updateBioData(profileData, user.getCategory());
+					}
 					profileDataRepository.insert(profileData);
 				}
 				// user.setProfileDatas(profileDatas);
@@ -292,17 +308,16 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		return findByUserName(user.getUserId(), false) != null;
 	}
 
-	public ProfileData createBioData(ProfileData profileData) throws Exception {
+	private ProfileData updateBioData(ProfileData profileData, String category) throws Exception {
 		// TODO
-		Gson gson = new Gson();
-		String entityType = profileData.getEntityType();
+		//Gson gson = new Gson();
+		//String category = profileData.get.getEntityType();
 
 		// DBObject profileDataObj = gson.fromJson(profileData.getData().toString(),
 		// DBObject.class);
 		BasicDBObject profileDataObj = profileData.getData();
 
-		if (entityType.equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC)
-				|| entityType.equalsIgnoreCase(SystemConstants.USERTYPE_LEGIS)) {
+		if (category.equalsIgnoreCase(SystemConstants.USERTYPE_PUBLIC)) {
 
 			// check for email/phone pattern with user.getUsername() and set corresponding
 			// value
@@ -335,7 +350,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 		// BasicDBObject.class);
 		// profileData.setData(profileDataDBObj);
 
-		saveProfileData(profileData);
+		//saveProfileData(profileData);
 
 		return profileData;
 	}
