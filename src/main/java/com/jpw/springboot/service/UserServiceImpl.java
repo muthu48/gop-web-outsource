@@ -445,7 +445,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 				BasicDBObject data = new BasicDBObject();
 
 				user.setUsername(payload.getEmail());
-				user.setUserType(SystemConstants.USERTYPE_PUBLIC);
+				//user.setUserType(SystemConstants.USERTYPE_PUBLIC);
+				user.setCategory(SystemConstants.USERTYPE_PUBLIC);
 				profileData.setEntityId(user.getUsername());
 				user.setSourceSystem("GOOGLE");
 				user.setSourceId(payload.getEmail());
@@ -503,7 +504,8 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 				BasicDBObject data = new BasicDBObject();
 
 				user.setUsername(fbUser.getEmail());
-				user.setUserType(SystemConstants.USERTYPE_PUBLIC);
+				//user.setUserType(SystemConstants.USERTYPE_PUBLIC);
+				user.setCategory(SystemConstants.USERTYPE_PUBLIC);
 				profileData.setEntityId(user.getUsername());
 
 				user.setSourceSystem("FACEBOOK");

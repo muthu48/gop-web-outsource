@@ -24,7 +24,7 @@ import com.mongodb.client.MongoClients;
  
 //NOT USED, SPRING HANDLES THE CONNECTION
 //REQUIRED ONLY WHEN DEFAULT NEEDS TO BE OVERWRITTEN
-@Configuration
+//@Configuration
 public class MongoDBConnection extends AbstractMongoClientConfiguration {
 	
 	//@Value("${spring.data.mongodb.host}")
@@ -73,7 +73,7 @@ public class MongoDBConnection extends AbstractMongoClientConfiguration {
 	
 	@Bean
     public  MongoClientOptions mongoClientOptions(){
-        System.setProperty ("javax.net.ssl.keyStore","C:/Users/OPSKY/Java/jdk1.8.0_25/jre/lib/security/cacerts");
+        System.setProperty ("javax.net.ssl.keyStore","C:/Users/Java/jdk1.8.0_25/jre/lib/security/cacerts");
         System.setProperty ("javax.net.ssl.keyStorePassword","jksadmin");   
         MongoClientOptions.Builder builder = MongoClientOptions.builder();
         MongoClientOptions options=builder.sslEnabled(true).build();        
